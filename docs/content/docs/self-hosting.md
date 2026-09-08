@@ -68,6 +68,8 @@ The `search-gateway` can be configured using the following environment variables
 | `SEARCHBASE_ADDRESS` | *(empty)* | Optional. Used to override the base URL sent to MCP clients for SSE connections. **Reverse Proxy Note:** If deploying Searchbase behind a reverse proxy (like Traefik, Nginx, or Cloudflare Tunnels), leave this blank. The server will use relative paths, allowing the proxy to handle domain routing seamlessly. Set this only if you need to force a specific absolute URL. |
 | `SEARCHBASE_LOG_LEVEL` | `error` | Log level for structured logging (`debug`, `info`, `warn`, `error`). |
 | `SEARCHBASE_LOG_FORMAT` | `json` | Log format (`json` or `text`). |
+| `SEARCHBASE_MCP_HEARTBEAT_ENABLED` | `false` | Send periodic MCP heartbeat pings on the SSE and Streamable HTTP transports. Off unless explicitly set to `true`, so existing deployments keep the current behavior. Enable it when MCP clients drop idle connections, for example the reference MCP SSE client, which closes the stream after its default 300s read timeout. |
+| `SEARCHBASE_MCP_HEARTBEAT_INTERVAL` | `60` | Heartbeat interval in seconds. Only used when `SEARCHBASE_MCP_HEARTBEAT_ENABLED=true`. Minimum accepted value is `15`; a lower value fails startup instead of hammering the gateway and its host with excessively frequent pings. |
 | `SEARCHBASE_TRACING_ENABLED` | `false` | Enable OpenTelemetry distributed tracing. (Experimental) |
 | `SEARCHBASE_TRACING_ENDPOINT` | *(empty)* | Endpoint for the tracing backend. (Experimental) |
 

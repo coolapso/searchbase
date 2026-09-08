@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"time"
 
 	"github.com/coolapso/searchbase/search-gateway/internal/scraper"
 	"github.com/coolapso/searchbase/search-gateway/internal/search"
@@ -64,23 +65,36 @@ func NewServer(searchProvider search.SearchProvider, scraperClient *scraper.Scra
 // If baseURL is not empty, it configures the SSE options to use it,
 // otherwise it leaves it empty so the server returns relative paths
 // for seamless reverse proxy integration.
-func (s *MCPServer) RegisterRoutes(r *gin.Engine, baseURL string) {
+// When heartbeatEnabled is true, both transports send periodic pings every
+// heartbeatInterval to keep otherwise idle connections from being torn down
+// by clients with a shorter read timeout.
+func (s *MCPServer) RegisterRoutes(r *gin.Engine, baseURL string, heartbeatEnabled bool, heartbeatInterval time.Duration) {
 	opts := []server.SSEOption{
 		server.WithSSEEndpoint("/mcp/sse"),
 		server.WithMessageEndpoint("/mcp/message"),
+		server.WithKeepAlive(heartbeatEnabled),
 	}
 
 	if baseURL != "" {
 		opts = append(opts, server.WithBaseURL(baseURL))
 	}
 
-	sseServer := server.NewSSEServer(s.McpServer, opts...)
-	r.GET("/mcp/sse", gin.WrapH(sseServer.SSEHandler()))
-	r.POST("/mcp/message", gin.WrapH(sseServer.MessageHandler()))
-
 	httpOpts := []server.StreamableHTTPOption{
 		server.WithEndpointPath("/mcp/http"),
 	}
+
+	// WithKeepAliveInterval implicitly enables keepalive, so it must only be
+	// added when the heartbeat is actually enabled. WithHeartbeatInterval is
+	// the only heartbeat knob on the streamable HTTP transport, an unset
+	// interval means no heartbeat.
+	if heartbeatEnabled {
+		opts = append(opts, server.WithKeepAliveInterval(heartbeatInterval))
+		httpOpts = append(httpOpts, server.WithHeartbeatInterval(heartbeatInterval))
+	}
+
+	sseServer := server.NewSSEServer(s.McpServer, opts...)
+	r.GET("/mcp/sse", gin.WrapH(sseServer.SSEHandler()))
+	r.POST("/mcp/message", gin.WrapH(sseServer.MessageHandler()))
 
 	httpServer := server.NewStreamableHTTPServer(s.McpServer, httpOpts...)
 	r.Any("/mcp/http", gin.WrapH(httpServer))
