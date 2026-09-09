@@ -62,6 +62,7 @@ pip-delete-this-directory.txt
 search-gateway/search-gateway
 search-gateway/main
 search-gateway/bin/
+search-gateway/server
 bin/
 
 # Test binaries
