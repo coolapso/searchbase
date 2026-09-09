@@ -15,6 +15,12 @@ services:
       - SEARCHBASE_CRAWL_WORKER_ADDRESS=http://crawl-worker:8000
       - SEARCHBASE_SEARCH_PROVIDER=ddgs
       - SEARCHBASE_DDGS_PROVIDER_ADDRESS=http://ddgs:8001
+      # MCP heartbeat is off unless SEARCHBASE_MCP_HEARTBEAT_ENABLED is explicitly
+      # set to true here. It keeps idle SSE and streamable HTTP connections alive
+      # for clients that drop them after a shorter read timeout.
+      # The interval is in seconds and must be >= 15 when the heartbeat is enabled.
+      # - SEARCHBASE_MCP_HEARTBEAT_ENABLED=true
+      # - SEARCHBASE_MCP_HEARTBEAT_INTERVAL=60
     depends_on:
       - crawl-worker
 

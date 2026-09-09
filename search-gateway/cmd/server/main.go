@@ -63,13 +63,15 @@ func main() {
 	apiServer.RegisterSwaggerRoutes(r)
 
 	mcpServer := mcp.NewServer(searchProvider, scraperClient, logger)
-	mcpServer.RegisterRoutes(r, s.Address())
+	mcpServer.RegisterRoutes(r, s.Address(), s.Mcp().HeartbeatEnabled(), s.Mcp().HeartbeatInterval())
 
 	logger.Info("Starting searchbase Gateway",
 		"port", s.Port(),
 		"search_backend", s.SearchProvider().Name(),
 		"search_provider_address", s.SearchProvider().Address(),
 		"crawl_worker", s.CrawlWorkerAddress(),
+		"mcp_heartbeat_enabled", s.Mcp().HeartbeatEnabled(),
+		"mcp_heartbeat_interval", s.Mcp().HeartbeatInterval(),
 	)
 
 	if err := r.Run(":" + s.Port()); err != nil && err != http.ErrServerClosed {

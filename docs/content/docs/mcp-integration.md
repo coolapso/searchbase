@@ -181,3 +181,16 @@ Clients that support SSE MCP servers can use the same JSON shape:
 ```
 
 Replace `localhost` with the actual server address if Searchbase is not running on the same machine as your MCP client.
+
+## Idle Connection Timeouts
+
+Some MCP clients close a connection when nothing is received for a while. The reference MCP SSE client, for example, defaults `sse_read_timeout` to 300s, so an idle Searchbase session is dropped after roughly five minutes.
+
+Searchbase can send periodic heartbeat pings on both the SSE and Streamable HTTP transports to keep those connections open. The heartbeat is off by default and is enabled explicitly:
+
+```env
+SEARCHBASE_MCP_HEARTBEAT_ENABLED=true
+SEARCHBASE_MCP_HEARTBEAT_INTERVAL=60
+```
+
+`SEARCHBASE_MCP_HEARTBEAT_INTERVAL` is expressed in seconds, defaults to `60`, and is only used when the heartbeat is enabled. The minimum accepted value is `15`; anything lower fails startup. Pick an interval comfortably below your client's read timeout. See [Self Hosting](/docs/self-hosting/) for the full configuration reference.

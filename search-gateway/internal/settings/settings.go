@@ -3,6 +3,7 @@ package settings
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
@@ -17,6 +18,7 @@ type Settings struct {
 	address            string
 	logLevel           string
 	otel               *Otel
+	mcp                *Mcp
 }
 
 type providerSpec struct {
@@ -39,9 +41,10 @@ func (s *Settings) GinMode() string                 { return s.ginMode }
 func (s *Settings) Address() string                 { return s.address }
 func (s *Settings) LogLevel() string                { return s.logLevel }
 func (s *Settings) Otel() *Otel                     { return s.otel }
+func (s *Settings) Mcp() *Mcp                       { return s.mcp }
 
 // NewSettings loads SEARCHBASE_* environment variables, applies defaults, and
-// validates provider and tracing configuration.
+// validates provider, tracing and mcp configuration.
 func NewSettings() (*Settings, error) {
 	v := viper.New()
 	v.SetEnvPrefix("SEARCHBASE")
@@ -52,6 +55,8 @@ func NewSettings() (*Settings, error) {
 	v.SetDefault("SEARCH_PROVIDER", "searchbase_ddg")
 	v.SetDefault("LOG_LEVEL", "error")
 	v.SetDefault("ENVIRONMENT", "production")
+	v.SetDefault("MCP_HEARTBEAT_ENABLED", false)
+	v.SetDefault("MCP_HEARTBEAT_INTERVAL", 60)
 
 	providerName := v.GetString("SEARCH_PROVIDER")
 	if _, ok := providerSpecs[providerName]; !ok {
@@ -91,6 +96,10 @@ func NewSettings() (*Settings, error) {
 				endpoint: v.GetString("TRACING_ENDPOINT"),
 			},
 		},
+		mcp: &Mcp{
+			heartbeatEnabled:  v.GetBool("MCP_HEARTBEAT_ENABLED"),
+			heartbeatInterval: time.Duration(v.GetInt("MCP_HEARTBEAT_INTERVAL")) * time.Second,
+		},
 	}
 
 	if strings.ToLower(v.GetString("ENVIRONMENT")) == "dev" {
@@ -98,6 +107,10 @@ func NewSettings() (*Settings, error) {
 	}
 
 	if err := s.otel.tracing.validate(); err != nil {
+		return nil, err
+	}
+
+	if err := s.mcp.validate(); err != nil {
 		return nil, err
 	}
 

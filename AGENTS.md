@@ -18,12 +18,13 @@ The front-facing orchestrator. Built in Go for high concurrency, low memory foot
     *   Expose standard REST API (`/api/v1/search` and `/api/v1/fetch`).
     *   Expose Swagger UI documentation (`/docs`).
     *   Expose MCP Server over SSE (`/mcp/sse` and `/mcp/message`) and Streamable HTTP (`/mcp/http`).
+    *   Optionally send periodic MCP heartbeat pings on both transports to keep idle connections from being dropped by clients with a shorter read timeout. Off by default, enabled with `SEARCHBASE_MCP_HEARTBEAT_ENABLED=true` and tuned with `SEARCHBASE_MCP_HEARTBEAT_INTERVAL` (seconds, default `60`, minimum `15` enforced at startup).
     *   Auto-generate OpenAPI specs.
     *   Scrape DuckDuckGo (HTML version: `html.duckduckgo.com`) to extract top URLs when using the native `searchbase_ddg` provider.
     *   Call official provider APIs when configured, including Brave (`SEARCHBASE_SEARCH_PROVIDER=brave` and `SEARCHBASE_BRAVE_API_TOKEN`) and Mojeek (`SEARCHBASE_SEARCH_PROVIDER=mojeek` and `SEARCHBASE_MOJEEK_API_KEY`).
     *   Return compact search results (`title`, `url`, `snippet`) without automatically fetching page content.
     *   Fetch page content only through `/api/v1/fetch` or the MCP `fetch_url` tool when the client/LLM explicitly requests it.
-    *   **Configuration:** Uses Viper library with centralized `settings` package (`internal/settings`) enforcing a strict `SEARCHBASE_` prefix for all environment variables (e.g., `SEARCHBASE_PORT`, `SEARCHBASE_CRAWL_WORKER_ADDRESS`, `SEARCHBASE_LOG_LEVEL`). Supports defaults and automatic env var binding.
+    *   **Configuration:** Uses Viper library with centralized `settings` package (`internal/settings`) enforcing a strict `SEARCHBASE_` prefix for all environment variables (e.g., `SEARCHBASE_PORT`, `SEARCHBASE_CRAWL_WORKER_ADDRESS`, `SEARCHBASE_LOG_LEVEL`). Supports defaults and automatic env var binding. Grouped settings live in their own files (`otel.go` for tracing, `mcp.go` for MCP transport) and expose a `validate()` method so misconfiguration fails fast at startup.
 *   **Design Pattern:** Uses Interfaces (e.g., `SearchProvider`) to allow easy plugging of search APIs and metasearch providers without changing core logic. Current providers include native DuckDuckGo HTML (`searchbase_ddg`), DDGS (`ddgs`), SearXNG (`searxng`), Brave Search API (`brave`), and Mojeek Search API (`mojeek`).
 
 ### B. Component 2: `crawl-worker` (Python)

@@ -3,6 +3,7 @@ package settings
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -36,6 +37,14 @@ func TestNewSettings_Defaults(t *testing.T) {
 	if s.SearchProvider().Name() != "searchbase_ddg" {
 		t.Errorf("Expected default search provider searchbase_ddg, got %s", s.SearchProvider().Name())
 	}
+
+	if s.Mcp().HeartbeatEnabled() {
+		t.Error("Expected mcp heartbeat to be disabled by default")
+	}
+
+	if s.Mcp().HeartbeatInterval() != 60*time.Second {
+		t.Errorf("Expected default mcp heartbeat interval 60s, got %s", s.Mcp().HeartbeatInterval())
+	}
 }
 
 func TestNewSettings_EnvVars(t *testing.T) {
@@ -45,6 +54,8 @@ func TestNewSettings_EnvVars(t *testing.T) {
 	t.Setenv("SEARCHBASE_ENVIRONMENT", "dev")
 	t.Setenv("SEARCHBASE_SEARCH_PROVIDER", "ddgs")
 	t.Setenv("SEARCHBASE_DDGS_PROVIDER_ADDRESS", "http://ddgs-service:8002")
+	t.Setenv("SEARCHBASE_MCP_HEARTBEAT_ENABLED", "true")
+	t.Setenv("SEARCHBASE_MCP_HEARTBEAT_INTERVAL", "45")
 
 	s, err := NewSettings()
 	if err != nil {
@@ -73,6 +84,14 @@ func TestNewSettings_EnvVars(t *testing.T) {
 
 	if s.SearchProvider().Address() != "http://ddgs-service:8002" {
 		t.Errorf("Expected ddgs address http://ddgs-service:8002, got %s", s.SearchProvider().Address())
+	}
+
+	if !s.Mcp().HeartbeatEnabled() {
+		t.Error("Expected mcp heartbeat to be enabled")
+	}
+
+	if s.Mcp().HeartbeatInterval() != 45*time.Second {
+		t.Errorf("Expected mcp heartbeat interval 45s, got %s", s.Mcp().HeartbeatInterval())
 	}
 }
 
@@ -124,6 +143,98 @@ func TestNewSettings_SearchProviderValidationErrors(t *testing.T) {
 
 			if strings.Contains(err.Error(), "SEARCHBASE_") && strings.HasSuffix(err.Error(), "SEARCHBASE_") {
 				t.Fatalf("Error has incomplete environment variable name: %v", err)
+			}
+		})
+	}
+}
+
+func TestNewSettings_McpHeartbeatValidation(t *testing.T) {
+	tests := []struct {
+		name          string
+		enabled       string
+		interval      string
+		expectedError string
+	}{
+		{
+			name:          "interval below minimum while enabled",
+			enabled:       "true",
+			interval:      "1",
+			expectedError: "mcp heartbeat interval too low: SEARCHBASE_MCP_HEARTBEAT_INTERVAL must be >= 15s, got 1s",
+		},
+		{
+			name:          "interval just below minimum while enabled",
+			enabled:       "true",
+			interval:      "14",
+			expectedError: "mcp heartbeat interval too low: SEARCHBASE_MCP_HEARTBEAT_INTERVAL must be >= 15s, got 14s",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv("SEARCHBASE_MCP_HEARTBEAT_ENABLED", tt.enabled)
+			t.Setenv("SEARCHBASE_MCP_HEARTBEAT_INTERVAL", tt.interval)
+
+			_, err := NewSettings()
+			if err == nil {
+				t.Fatal("Expected error, got nil")
+			}
+
+			if err.Error() != tt.expectedError {
+				t.Fatalf("Expected error %q, got %q", tt.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestNewSettings_McpHeartbeatAcceptedIntervals(t *testing.T) {
+	tests := []struct {
+		name             string
+		enabled          string
+		interval         string
+		expectedEnabled  bool
+		expectedInterval time.Duration
+	}{
+		{
+			name:             "interval at the minimum while enabled",
+			enabled:          "true",
+			interval:         "15",
+			expectedEnabled:  true,
+			expectedInterval: 15 * time.Second,
+		},
+		{
+			name:             "enabled without an interval falls back to the default",
+			enabled:          "true",
+			interval:         "",
+			expectedEnabled:  true,
+			expectedInterval: 60 * time.Second,
+		},
+		{
+			name:             "interval below minimum is ignored while disabled",
+			enabled:          "false",
+			interval:         "1",
+			expectedEnabled:  false,
+			expectedInterval: 1 * time.Second,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv("SEARCHBASE_MCP_HEARTBEAT_ENABLED", tt.enabled)
+			if tt.interval != "" {
+				t.Setenv("SEARCHBASE_MCP_HEARTBEAT_INTERVAL", tt.interval)
+			}
+
+			s, err := NewSettings()
+			if err != nil {
+				t.Fatalf("Failed to create settings: %v", err)
+			}
+
+			if s.Mcp().HeartbeatEnabled() != tt.expectedEnabled {
+				t.Errorf("Expected mcp heartbeat enabled %t, got %t", tt.expectedEnabled, s.Mcp().HeartbeatEnabled())
+			}
+
+			if s.Mcp().HeartbeatInterval() != tt.expectedInterval {
+				t.Errorf("Expected mcp heartbeat interval %s, got %s", tt.expectedInterval, s.Mcp().HeartbeatInterval())
 			}
 		})
 	}
