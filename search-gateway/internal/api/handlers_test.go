@@ -167,3 +167,35 @@ func TestHandleFetch(t *testing.T) {
 		t.Errorf("Expected fetched markdown, got %s", resp.Markdown)
 	}
 }
+
+func TestHandleFetchFailureDoesNotLogURL(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	mockScraperServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer mockScraperServer.Close()
+
+	var logs bytes.Buffer
+	logger := slog.New(slog.NewJSONHandler(&logs, nil))
+	apiServer := NewAPIServer(&MockSearchProvider{}, scraper.NewScraperClient(mockScraperServer.URL), logger)
+
+	router := gin.New()
+	apiServer.RegisterRoutes(router.Group("/api/v1"))
+
+	const targetURL = "https://private.example/secret-path"
+	bodyBytes, _ := json.Marshal(FetchRequest{URL: targetURL})
+	req, _ := http.NewRequest(http.MethodPost, "/api/v1/fetch", bytes.NewBuffer(bodyBytes))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Fatalf("Expected status code 500, got %d", w.Code)
+	}
+
+	if bytes.Contains(logs.Bytes(), []byte(targetURL)) {
+		t.Fatalf("Fetch failure log leaked URL: %s", logs.String())
+	}
+}

@@ -41,6 +41,7 @@ Privacy-first structured logging designed to prevent user tracking and correlati
 *   **Privacy Guarantees:**
   - **No IP Logging:** Raw IP addresses are never logged; only regional data from edge proxies (e.g., Cloudflare's `CF-IPCountry` header).
   - **Minimal Context:** Only essential request metadata (method, path, status code, latency) is captured.
+  - **No Fetched-URL Logging:** Fetch failures emit only a generic event; neither the requested URL nor a worker error that could contain it is logged.
 
 #### OpenTelemetry Tracing ⚠️ Experimental
 Distributed tracing support for observability and debugging. Not fully tested yet.

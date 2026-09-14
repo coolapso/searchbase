@@ -138,7 +138,7 @@ func (s *APIServer) HandleFetch(c *gin.Context) {
 
 	markdown, scrapeErr := s.ScraperClient.Extract(ctx, req.URL, req.JSRender)
 	if scrapeErr != nil {
-		s.logger.Error("failed to scrape URL", "url", req.URL, "error", scrapeErr)
+		s.logger.Error("failed to scrape URL")
 		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "failed to scrape URL"})
 		return
 	}

@@ -19,6 +19,7 @@ Searchbase is built from the ground up with privacy in mind. Its structured logg
 
 *   **No IP Logging:** Raw IP addresses are never logged; only regional data (e.g., `CF-IPCountry`) is captured.
 *   **No Search Queries:** Search queries and fetched URLs are never logged.
+*   **Safe Fetch Failures:** Failed fetches emit a generic failure event without the requested URL or worker error details that could contain it.
 *   **Minimal Context:** Only essential request metadata (method, path, status code, latency) is recorded.
 *   **Configurable:** Set via `SEARCHBASE_LOG_LEVEL` and `SEARCHBASE_LOG_FORMAT` environment variables.
 
