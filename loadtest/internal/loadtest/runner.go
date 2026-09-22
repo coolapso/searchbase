@@ -193,6 +193,11 @@ func runStage(ctx context.Context, s Scenario, cfg RunConfig, client *Client, st
 				_ = x.Close()
 			}
 			idleMu.Unlock()
+			finalSample := sampleStats(stats, cfg.Metrics)
+			samples = append(samples, finalSample)
+			if reason == "" {
+				reason = Evaluate(s, finalSample, baseline)
+			}
 			_, _, _, _, achieved, _ := stats.Snapshot()
 			return Phase{Name: "stage", TargetRate: rate, StartedAt: started, EndedAt: time.Now().UTC(), Achieved: achieved, Stable: reason == "", Reason: reason}, samples, reason
 		}
@@ -204,6 +209,11 @@ func runStage(ctx context.Context, s Scenario, cfg RunConfig, client *Client, st
 				_ = x.Close()
 			}
 			idleMu.Unlock()
+			finalSample := sampleStats(stats, cfg.Metrics)
+			samples = append(samples, finalSample)
+			if reason == "" {
+				reason = Evaluate(s, finalSample, baseline)
+			}
 			_, _, _, _, achieved, _ := stats.Snapshot()
 			return Phase{Name: "stage", TargetRate: rate, StartedAt: started, EndedAt: time.Now().UTC(), Achieved: achieved, Stable: reason == "", Reason: reason}, samples, reason
 		case <-tick.C:
