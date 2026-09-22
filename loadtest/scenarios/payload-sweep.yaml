@@ -1,0 +1,1 @@
+{"name":"payload-sweep","kind":"rest-fetch","target":"isolated-gateway","start_rate":1,"payload":"large","mode":"open"}

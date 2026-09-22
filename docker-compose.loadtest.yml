@@ -1,0 +1,104 @@
+# Dedicated, disposable benchmark stack. It never shares the development
+# Compose project, volumes, provider credentials, or external network access.
+services:
+  fixture:
+    build:
+      context: ./loadtest
+      dockerfile: fixture.Containerfile
+    environment:
+      FIXTURE_LATENCY: ${LOADTEST_FIXTURE_LATENCY:-0ms}
+      FIXTURE_FAILURE_PERCENT: ${LOADTEST_FIXTURE_FAILURE_PERCENT:-0}
+    networks: [benchmark]
+
+  crawl-worker:
+    build:
+      context: ./crawl-worker
+      dockerfile: Containerfile
+    environment:
+      CRAWLER_LOG_LEVEL: error
+      CRAWLER_LOG_FORMAT: json
+    networks: [benchmark]
+    deploy:
+      resources:
+        limits:
+          cpus: ${LOADTEST_WORKER_CPUS:-1.0}
+          memory: ${LOADTEST_WORKER_MEMORY:-2g}
+
+  search-gateway:
+    build:
+      context: ./search-gateway
+      dockerfile: Containerfile
+    environment:
+      SEARCHBASE_PORT: 8080
+      SEARCHBASE_LOG_LEVEL: error
+      SEARCHBASE_SEARCH_PROVIDER: ddgs
+      SEARCHBASE_DDGS_PROVIDER_ADDRESS: http://fixture:8081
+      SEARCHBASE_CRAWL_WORKER_ADDRESS: http://crawl-worker:8000
+    depends_on: [fixture, crawl-worker]
+    networks: [benchmark]
+    ports: ["${LOADTEST_BIND_ADDRESS:-127.0.0.1}:18080:8080"]
+    deploy:
+      resources:
+        limits:
+          cpus: ${LOADTEST_GATEWAY_CPUS:-1.0}
+          memory: ${LOADTEST_GATEWAY_MEMORY:-512m}
+
+  # This identical gateway routes fetches to the mock extractor. It isolates
+  # gateway work without replacing code in the gateway business path.
+  search-gateway-isolated:
+    build:
+      context: ./search-gateway
+      dockerfile: Containerfile
+    environment:
+      SEARCHBASE_PORT: 8080
+      SEARCHBASE_LOG_LEVEL: error
+      SEARCHBASE_SEARCH_PROVIDER: ddgs
+      SEARCHBASE_DDGS_PROVIDER_ADDRESS: http://fixture:8081
+      SEARCHBASE_CRAWL_WORKER_ADDRESS: http://fixture:8081
+    depends_on: [fixture]
+    networks: [benchmark]
+    deploy:
+      resources:
+        limits:
+          cpus: ${LOADTEST_GATEWAY_CPUS:-1.0}
+          memory: ${LOADTEST_GATEWAY_MEMORY:-512m}
+
+  cadvisor:
+    image: ghcr.io/google/cadvisor:v0.53.0
+    privileged: true
+    command: ["--docker_only=true", "--housekeeping_interval=5s"]
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    devices: ["/dev/kmsg:/dev/kmsg"]
+    networks: [benchmark]
+    ports: ["${LOADTEST_BIND_ADDRESS:-127.0.0.1}:18081:8080"]
+
+  node-exporter:
+    image: quay.io/prometheus/node-exporter:v1.10.2
+    command: ["--path.rootfs=/host"]
+    pid: host
+    volumes: ["/:/host:ro,rslave"]
+    networks: [benchmark]
+    ports: ["${LOADTEST_BIND_ADDRESS:-127.0.0.1}:19100:9100"]
+
+  loadtest:
+    build:
+      context: ./loadtest
+      dockerfile: Containerfile
+    profiles: [generator]
+    user: "${LOADTEST_UID:-1000}:${LOADTEST_GID:-1000}"
+    group_add: ["${LOADTEST_DOCKER_GID:-0}"]
+    depends_on: [search-gateway, search-gateway-isolated, crawl-worker, cadvisor]
+    networks: [benchmark]
+    volumes:
+      - "./loadtest/results:/results"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+networks:
+  benchmark:
+    name: searchbase-loadtest-network
+    internal: true

@@ -1,0 +1,44 @@
+package main
+
+import (
+	"context"
+	"flag"
+	"fmt"
+	"os"
+	"path/filepath"
+	"time"
+
+	"github.com/coolapso/searchbase/loadtest/internal/loadtest"
+)
+
+func main() {
+	scenarioName := flag.String("scenario", "gateway-rest-search", "scenario file name")
+	profile := flag.String("profile", "smoke", "smoke, discover, or soak")
+	dir := flag.String("scenarios", "/scenarios", "scenario directory")
+	out := flag.String("output", "/results", "result directory")
+	duration := flag.Duration("stage-duration", 0, "override each stage duration")
+	rate := flag.Float64("rate", 0, "override the scenario request rate (operations/second)")
+	instance := flag.String("instance-label", "co-located", "VM/container label")
+	comparable := flag.Bool("comparable", false, "mark as remotely generated and comparable")
+	flag.Parse()
+	s, err := loadtest.LoadScenario(*dir, *scenarioName)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	resultDir := filepath.Join(*out, fmt.Sprintf("run-%d", time.Now().UnixNano()))
+	r, err := loadtest.Run(context.Background(), s, loadtest.RunConfig{Profile: *profile, Rate: *rate, StageDuration: *duration, Output: resultDir, InstanceLabel: *instance, Comparable: *comparable, Targets: loadtest.Targets{Gateway: env("LOADTEST_GATEWAY", "http://search-gateway:8080"), IsolatedGateway: env("LOADTEST_ISOLATED_GATEWAY", "http://search-gateway-isolated:8080"), Worker: env("LOADTEST_WORKER", "http://crawl-worker:8000")}, Metrics: map[string]string{"search-gateway": "http://cadvisor:8080/metrics", "crawl-worker": "http://cadvisor:8080/metrics", "fixture": "http://cadvisor:8080/metrics", "cadvisor": "http://cadvisor:8080/metrics", "node-exporter": "http://cadvisor:8080/metrics", "loadtest": "http://cadvisor:8080/metrics", "host": "http://node-exporter:9100/metrics"}, Revision: os.Getenv("LOADTEST_GIT_REVISION")})
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	fmt.Printf("report: %s/report.json; safe capacity: %.2f ops/s\n", resultDir, r.SafeCapacity)
+}
+func env(k, d string) string {
+	if v := os.Getenv(k); v != "" {
+		return v
+	}
+	return d
+}
+
+var _ = time.Second

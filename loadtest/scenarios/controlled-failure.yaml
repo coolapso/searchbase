@@ -1,0 +1,1 @@
+{"name":"controlled-failure","kind":"rest-search","target":"gateway","start_rate":1,"payload":"small","mode":"open","strict_p95_ms":30000}

@@ -1,0 +1,1 @@
+{"name":"worker-static","kind":"worker-fetch","target":"worker","start_rate":0.5,"payload":"medium","mode":"open"}

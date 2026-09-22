@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Searchbase load report v1",
+  "type": "object",
+  "required": ["schema_version", "run_id", "suite", "scenario", "profile", "comparable", "started_at", "finished_at", "throughput", "latency", "samples", "safe_capacity"],
+  "properties": {"schema_version":{"const":"searchbase-load-report/v1"},"run_id":{"type":"string"},"suite":{"type":"string"},"scenario":{"type":"string"},"profile":{"type":"string"},"comparable":{"type":"boolean"},"throughput":{"type":"number"},"safe_capacity":{"type":"number"},"latency":{"type":"object"},"samples":{"type":"array"}}
+}

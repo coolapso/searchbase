@@ -1,0 +1,1 @@
+{"name":"gateway-rest-fetch-isolated","kind":"rest-fetch","target":"isolated-gateway","start_rate":10,"payload":"medium","mode":"open"}

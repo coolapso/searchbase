@@ -29,6 +29,7 @@ All documentation is available on the dedicated documentation site. Please visit
 - REST API Reference
 - Configuration & Architecture
 - Self-Hosting Instructions
+- Deterministic load-test and capacity instructions
 - Contributing and CLA information
 
 ---
@@ -44,6 +45,17 @@ docker compose -f examples/compose/docker-compose.native.yml up
 The Gateway will be available at `http://localhost:8080`.
 
 The Compose files are demonstration examples only and are not intended for production deployments. See the [Documentation Site](https://docs.searchbase.md) for backend-specific examples and self-hosting notes.
+
+## Load-test smoke check
+
+The disposable load-test stack uses only local deterministic fixtures and is
+separate from development Compose services:
+
+```bash
+task loadtest:run
+```
+
+See the [load-testing documentation](https://docs.searchbase.md/docs/load-testing/) before running discovery or soak profiles.
 
 ## ⚖️ License
 

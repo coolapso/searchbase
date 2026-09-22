@@ -114,3 +114,68 @@ tasks:
     desc: "Run pre-release checks"
     deps: [ search-gateway:test ] 
 
+  loadtest:build:
+    desc: "Build the isolated load-test fixture and generator images"
+    cmds:
+      - docker compose -p searchbase-loadtest -f docker-compose.loadtest.yml --profile generator build fixture loadtest
+
+  loadtest:up:
+    desc: "Create a fresh isolated load-test stack (never starts development Compose)"
+    cmds:
+      - task: loadtest:down
+      - docker compose -p searchbase-loadtest -f docker-compose.loadtest.yml up -d --build fixture crawl-worker search-gateway search-gateway-isolated cadvisor node-exporter
+      - docker compose -p searchbase-loadtest -f docker-compose.loadtest.yml ps
+
+  loadtest:run:
+    desc: "Run one clean load-test scenario; use SCENARIO=... PROFILE=smoke|discover|soak"
+    vars:
+      SCENARIO: '{{.SCENARIO | default "gateway-rest-search"}}'
+      PROFILE: '{{.PROFILE | default "smoke"}}'
+      INSTANCE_LABEL: '{{.INSTANCE_LABEL | default "co-located"}}'
+      STAGE_DURATION: '{{.STAGE_DURATION | default ""}}'
+      RATE: '{{.RATE | default ""}}'
+    cmds:
+      - task: loadtest:up
+      - |
+        project="searchbase-loadtest"
+        /bin/sh -c '
+          project="searchbase-loadtest"
+          mkdir -p loadtest/results
+          trap "docker compose -p \"$project\" -f docker-compose.loadtest.yml down --volumes --remove-orphans" 0 1 2 15
+          LOADTEST_UID="$(id -u)" LOADTEST_GID="$(id -g)" LOADTEST_DOCKER_GID="$(stat -c %g /var/run/docker.sock)" docker compose -p "$project" -f docker-compose.loadtest.yml --profile generator run --build --rm loadtest --scenario {{.SCENARIO}} --profile {{.PROFILE}} --instance-label {{.INSTANCE_LABEL}} {{if .STAGE_DURATION}}--stage-duration {{.STAGE_DURATION}}{{end}} {{if .RATE}}--rate {{.RATE}}{{end}}
+        '
+
+  loadtest:suite:
+    desc: "Run the core smoke suite sequentially; use PROFILE=discover for capacity discovery"
+    vars:
+      PROFILE: '{{.PROFILE | default "smoke"}}'
+    cmds:
+      - task: loadtest:run
+        vars: { SCENARIO: gateway-rest-search, PROFILE: '{{.PROFILE}}' }
+      - task: loadtest:run
+        vars: { SCENARIO: gateway-rest-fetch-isolated, PROFILE: '{{.PROFILE}}' }
+      - task: loadtest:run
+        vars: { SCENARIO: worker-static, PROFILE: '{{.PROFILE}}' }
+      - task: loadtest:run
+        vars: { SCENARIO: worker-javascript, PROFILE: '{{.PROFILE}}' }
+      - task: loadtest:run
+        vars: { SCENARIO: core-mcp-http-search, PROFILE: '{{.PROFILE}}' }
+      - task: loadtest:run
+        vars: { SCENARIO: core-mcp-sse-active, PROFILE: '{{.PROFILE}}' }
+
+  loadtest:compare:
+    desc: "Compare generated report.json files without cloud pricing guesses"
+    dir: ./loadtest
+    cmds:
+      - go run ./cmd/compare {{.CLI_ARGS}}
+
+  loadtest:down:
+    desc: "Tear down only the searchbase-loadtest Compose project and its volumes"
+    cmds:
+      - |
+        project="searchbase-loadtest"
+        if [[ "$project" != "searchbase-loadtest" ]]; then
+          echo "refusing to remove an unexpected Compose project" >&2
+          exit 1
+        fi
+        docker compose -p "$project" -f docker-compose.loadtest.yml down --volumes --remove-orphans

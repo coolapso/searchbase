@@ -1,0 +1,1 @@
+{"name":"worker-javascript","kind":"worker-fetch","target":"worker","start_rate":0.25,"max_rate":32,"payload":"medium","js_render":true,"mode":"open"}

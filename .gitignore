@@ -92,3 +92,4 @@ lmstudio-mcp-config.json
 # Misc
 .semrel/
 TODO.md
+loadtest/results/

@@ -1,0 +1,1 @@
+{"name":"core-mcp-sse-idle","kind":"mcp-sse-search","target":"gateway","start_rate":0,"payload":"small","mode":"idle","idle_sessions":100}
