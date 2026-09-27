@@ -24,6 +24,7 @@ services:
     depends_on:
       - crawl-worker
 
+  ## Crawl woeker is going to be by the lightpanda-worker in a future major release.
   crawl-worker:
     image: ghcr.io/coolapso/searchbase/crawl-worker:latest
     build:
@@ -32,6 +33,7 @@ services:
     ports:
       - "8000:8000"
 
+  ## Lightpanda-worker going to become the default crawl worker in a future major release.
   ddgs:
     image: ghcr.io/coolapso/searchbase/ddgs:latest
     build:

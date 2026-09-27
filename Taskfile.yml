@@ -27,14 +27,19 @@ tasks:
       - task --list
 
   dev:up:
-    desc: "Start the local development environment (builds and runs containers without cache)"
+    desc: "Start the Lightpanda development stack"
     cmds:
-      - docker compose up --build --force-recreate
+      - docker compose -p searchbase-dev --project-directory . -f dev/compose/docker-compose.lightpanda.yml up --build --force-recreate --remove-orphans
+
+  dev:upcrawl4ai:
+    desc: "Start the Crawl4AI development stack"
+    cmds:
+      - docker compose -p searchbase-dev --project-directory . -f dev/compose/docker-compose.crawl4ai.yml up --build --force-recreate --remove-orphans
 
   dev:down:
-    desc: "Start the local development environment (builds and runs containers without cache)"
+    desc: "Stop the local development stack, including the alternate worker"
     cmds:
-      - docker compose down
+      - docker compose -p searchbase-dev --project-directory . -f dev/compose/docker-compose.lightpanda.yml down --remove-orphans
 
   container:login:
     desc: "Login to GHCR"

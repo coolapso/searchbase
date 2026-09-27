@@ -26,6 +26,10 @@ Read the full agreement in [`CLA.md`](https://github.com/coolapso/searchbase/blo
 ## Development
 
 Searchbase uses [Task](https://taskfile.dev/) to automate development and deployment tasks.
+User-facing Compose demos live in `examples/compose/`. Checkout-built
+development stacks and the isolated load-test stack live in `dev/compose/`.
+Run the tasks below from the repository root; the development stacks share
+the `searchbase-dev` Compose project.
 
 ## Common Tasks
 
@@ -33,8 +37,9 @@ You can run these tasks from the root directory.
 
 | Command | Description |
 | :--- | :--- |
-| `task dev:up` | Start the local development environment (Docker Compose). |
-| `task dev:down` | Stop the local development environment. |
+| `task dev:up` | Build and start the Lightpanda development stack. |
+| `task dev:upcrawl4ai` | Build and start the Crawl4AI development stack. |
+| `task dev:down` | Stop the active development stack. |
 | `task docs:hugo` | Run the documentation site locally. |
 
 ## Service-Specific Tasks

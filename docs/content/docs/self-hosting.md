@@ -12,7 +12,9 @@ Searchbase can run locally with Docker Compose examples or in production on Kube
 
 ## Docker Compose Examples
 
-The repository includes Compose examples under `examples/compose/` for quickly trying each backend.
+The repository includes user-facing Compose examples under `examples/compose/`
+for quickly trying each backend. The checkout-built development and benchmark
+stacks live under `dev/compose/`; use those when working on Searchbase itself.
 
 {{< hint warning >}}
 The Docker Compose files are demonstration examples only. They are useful for local testing and learning how services connect, but they are not production deployment templates.
@@ -122,13 +124,21 @@ The manually dispatched release workflow follows the gateway's Docker
 metadata/build-push pattern, publishing `latest`, full-version, and major.minor
 tags from the semantic-release tag for both architectures.
 
-The root `docker-compose.yml` is intended for development and may start more services than a normal deployment needs.
+For development from a checkout, use the stacks under `dev/compose/`. They
+build local source and may start more services than a typical deployment:
 
 ```bash
-docker compose up --build
+task dev:up             # Lightpanda worker
+task dev:upcrawl4ai     # Crawl4AI worker
+task dev:down           # Stop the searchbase-dev project
 ```
 
-Use it when actively developing Searchbase, not as a production baseline.
+The tasks run from the repository root and supply `--project-directory .` so
+Compose resolves build paths against the checkout. If invoking Compose
+directly, use the same option and a file under `dev/compose/`. The load-test
+stack in that directory has its own `searchbase-loadtest` project; see
+[Load testing](/docs/load-testing/). Neither development stack is a production
+deployment template.
 
 ## Kubernetes
 

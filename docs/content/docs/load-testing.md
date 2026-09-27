@@ -18,7 +18,9 @@ application share CPU, memory, storage, and network resources.
 
 ## What the suite starts
 
-`dev/compose/docker-compose.loadtest.yml` creates a project named `searchbase-loadtest`:
+`dev/compose/docker-compose.loadtest.yml` creates a project named
+`searchbase-loadtest`. It is a developer benchmark stack, separate from the
+user-facing demos under `examples/compose/`:
 
 - the checkout's gateway and real Crawl4AI/Chromium worker;
 - a fixture service that supplies DDGS-shaped search results, a mock extractor,
@@ -62,8 +64,8 @@ task loadtest:run SCENARIO=core-mcp-http-search PROFILE=smoke
 
 The command recreates only `searchbase-loadtest`, runs the generator, writes
 `report.json`, `samples.csv`, and `summary.md`, then removes its containers and
-volumes. It does not start, stop, or reuse `docker-compose.yml` development
-services. If a run is interrupted, clean up its exact project with:
+volumes. It does not start, stop, or reuse the `searchbase-dev` development
+stack. If a run is interrupted, clean up its exact project with:
 
 ```bash
 task loadtest:down
