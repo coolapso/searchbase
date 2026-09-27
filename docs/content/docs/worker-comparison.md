@@ -24,6 +24,9 @@ was compared across websites.
 At **4 worker CPUs and a 2 GiB worker limit**, fetching the same local
 JavaScript page:
 
+These saved results used the previous pinned nightly build. The current
+`0.4.1` release image has not been benchmarked here.
+
 | Path | Crawl4AI | Lightpanda |
 | :--- | ---: | ---: |
 | Gateway `POST /api/v1/fetch` | 6.73 successful fetches/s | **≥15.46 successful fetches/s**; test capped at 16/s |

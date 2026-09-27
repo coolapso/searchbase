@@ -55,10 +55,12 @@ for deployment behavior and configuration.
 
 **Choose Lightpanda for speed after checking its output on your pages; keep
 Crawl4AI for the default cleaned Markdown and optional JavaScript.** In a
-saved local JavaScript fixture run (4 worker CPUs, 2 GiB limit), the gateway
+saved local JavaScript fixture run with the previous pinned nightly (4 worker
+CPUs, 2 GiB limit), the gateway
 completed at least 15.46 fetches/s with Lightpanda at the test ceiling, versus 6.73
 fetches/s with Crawl4AI. This is a one-host result, not production capacity;
-the benchmark did not verify content completeness. See the
+the `0.4.1` release has not been benchmarked here, and the test did not verify
+content completeness. See the
 [comparison](https://docs.searchbase.md/docs/worker-comparison/) and the
 [reported Lightpanda Markdown omission](https://github.com/lightpanda-io/browser/issues/3661).
 

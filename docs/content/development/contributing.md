@@ -62,6 +62,15 @@ The root `container:build`, `container:build:all`, and `container:push` tasks
 include the Lightpanda worker. The release workflow publishes versioned
 images from a semantic release tag.
 
+Run `task lightpanda-worker:container:update-base` to check for a newer stable
+Lightpanda release and update the worker's Containerfile pin. The task requires
+`gh` and Docker Buildx and verifies both amd64 and arm64 before changing the
+version and digest.
+
+The [daily update workflow](https://github.com/coolapso/searchbase/blob/main/.github/workflows/update-lightpanda-base.yaml)
+runs the same task each morning and opens a PR when the pin changes. It can also
+be run manually from GitHub Actions.
+
 ## AI Disclosure & Contribution Policy
 
 I believe in transparency regarding how this project is built. While AI tools (like Copilot, Claude, or local LLMs) are extensively used in the development of Searchbase, **the core architecture, design decisions, and critical business logic are human-led and human-written** with AI assistance. AI acts as an assistant, not a replacement.

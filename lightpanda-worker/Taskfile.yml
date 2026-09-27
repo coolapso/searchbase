@@ -16,6 +16,11 @@ tasks:
       - mkdir -p bin
       - go build -o bin/lightpanda-worker ./cmd/server
 
+  container:update-base:
+    desc: "Update the Lightpanda base to the latest numbered stable release and digest"
+    cmds:
+      - python3 scripts/update-base.py
+
   container:build:
     desc: "Build the Lightpanda worker container image"
     cmds:

@@ -1,0 +1,47 @@
+name: Update Lightpanda base image
+
+on:
+  schedule:
+    - cron: '17 7 * * *'
+      timezone: Europe/Stockholm
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-lightpanda-base
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out default branch
+        uses: actions/checkout@v6
+        with:
+          ref: main
+
+      - name: Install Task
+        uses: go-task/setup-task@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Update pinned Lightpanda base
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: task lightpanda-worker:container:update-base
+
+      - name: Create or update pull request
+        uses: peter-evans/create-pull-request@v8
+        with:
+          add-paths: lightpanda-worker/Containerfile
+          branch: automation/lightpanda-base
+          delete-branch: true
+          commit-message: 'build(lightpanda): update browser base image'
+          title: 'build(lightpanda): update browser base image'
+          body: |
+            Updates the Lightpanda worker to the latest numbered stable release,
+            pinned to the amd64/arm64 image digest.

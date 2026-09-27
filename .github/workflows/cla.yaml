@@ -25,7 +25,7 @@ jobs:
           path-to-signatures: '.github/cla/signatures/v1/cla.json'
           path-to-document: 'https://github.com/coolapso/searchbase/blob/main/CLA.md'
           branch: 'cla-signatures'
-          allowlist: 'coolapso,dependabot[bot],renovate[bot]'
+          allowlist: 'coolapso,dependabot[bot],renovate[bot],github-actions[bot]'
           custom-pr-sign-comment: 'I have read the CLA Document and I hereby sign the CLA'
           custom-notsigned-prcomment: 'Thank you for contributing to Searchbase. Before this pull request can be merged, please read the CLA: $pathToCLADocument. If you agree, comment exactly: I have read the CLA Document and I hereby sign the CLA'
           custom-allsigned-prcomment: 'All contributors have signed the Searchbase CLA.'
