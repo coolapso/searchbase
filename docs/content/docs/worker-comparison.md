@@ -6,18 +6,15 @@ weight: 45
 
 ## Which should I choose?
 
-**Pick Lightpanda when speed matters and its Markdown passes checks on your
-pages.** At 4 worker CPUs / 2 GiB, the gateway completed at least 15.46
+**Pick the worker that best fits your deployment.** At 4 worker CPUs / 2 GiB, the gateway completed at least 15.46
 fetches/s with Lightpanda at the test ceiling, versus 6.73 with Crawl4AI.
-**Otherwise keep Crawl4AI**, Searchbase's default, for its cleaned Markdown
-and control over JavaScript through `js_render`. Lightpanda always runs
-JavaScript.
+The run used an older Lightpanda build and does not establish production
+capacity. Crawl4AI remains the default and supports control over JavaScript
+through `js_render`; Lightpanda always runs JavaScript.
 
-The condition on Lightpanda matters: [issue #3661](https://github.com/lightpanda-io/browser/issues/3661)
-reports that its Markdown dump included only 8 of 10 JavaScript-generated
-quotes even though the rendered HTML contained all 10. Our load test checks
-request success, **not content completeness**. Neither worker's output quality
-was compared across websites.
+The previously reported Lightpanda Markdown omission has been resolved and is
+not a current user-facing limitation. Markdown fidelity and token efficiency
+remain internal areas for regression testing and future optimization.
 
 ## What did the saved test show?
 

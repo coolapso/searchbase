@@ -58,7 +58,9 @@ Lightpanda executes JavaScript for every fetch; both `js_render: false` and
 `js_render: true` have the same behavior. This is an alternative worker, not
 a new search provider and not an automatic replacement for existing deployments.
 See [Crawl4AI and Lightpanda](/docs/worker-comparison/) for saved load-test
-results, their rate-ceiling limits, and the reported Markdown completeness issue.
+results and their rate-ceiling limits. The previously reported Markdown
+omission has been resolved; further fidelity and token-efficiency checks are
+internal regression work.
 
 The worker accepts `POST /extract` with `{"url":"https://example.org","js_render":false}`
 and returns `{"markdown":"...","success":true,"error":""}`. It also has

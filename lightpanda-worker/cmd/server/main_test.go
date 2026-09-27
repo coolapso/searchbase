@@ -151,7 +151,7 @@ func TestOutputLimit(t *testing.T) {
 	}
 }
 
-func TestLightpandaProcessUsesMarkdownAndClutterMode(t *testing.T) {
+func TestLightpandaProcessUsesMarkdownWithoutStripMode(t *testing.T) {
 	binary := filepath.Join(t.TempDir(), "fake-lightpanda")
 	script := "#!/bin/sh\nprintf '%s' \"$*\"\n"
 	if err := os.WriteFile(binary, []byte(script), 0700); err != nil {
@@ -159,7 +159,7 @@ func TestLightpandaProcessUsesMarkdownAndClutterMode(t *testing.T) {
 	}
 	markdown, err := (lightpandaFetcher{binary: binary, waitMS: 500}).Fetch(context.Background(), "HTTPS://EXAMPLE.ORG/path#private-fragment")
 	if err != nil || !strings.Contains(markdown, "--dump markdown") ||
-		!strings.Contains(markdown, "--strip-mode clutter") ||
+		strings.Contains(markdown, "--strip-mode") ||
 		!strings.Contains(markdown, "--fail-on-http-error") ||
 		!strings.Contains(markdown, "https://example.org/path") ||
 		strings.Contains(markdown, "private-fragment") {
