@@ -18,7 +18,7 @@ application share CPU, memory, storage, and network resources.
 
 ## What the suite starts
 
-`docker-compose.loadtest.yml` creates a project named `searchbase-loadtest`:
+`dev/compose/docker-compose.loadtest.yml` creates a project named `searchbase-loadtest`:
 
 - the checkout's gateway and real Crawl4AI/Chromium worker;
 - a fixture service that supplies DDGS-shaped search results, a mock extractor,

@@ -117,14 +117,14 @@ tasks:
   loadtest:build:
     desc: "Build the isolated load-test fixture and generator images"
     cmds:
-      - docker compose -p searchbase-loadtest -f docker-compose.loadtest.yml --profile generator build fixture loadtest
+      - docker compose -p searchbase-loadtest --project-directory . -f dev/compose/docker-compose.loadtest.yml --profile generator build fixture loadtest
 
   loadtest:up:
     desc: "Create a fresh isolated load-test stack (never starts development Compose)"
     cmds:
       - task: loadtest:down
-      - docker compose -p searchbase-loadtest -f docker-compose.loadtest.yml up -d --build fixture crawl-worker search-gateway search-gateway-isolated cadvisor node-exporter
-      - docker compose -p searchbase-loadtest -f docker-compose.loadtest.yml ps
+      - docker compose -p searchbase-loadtest --project-directory . -f dev/compose/docker-compose.loadtest.yml up -d --build fixture crawl-worker search-gateway search-gateway-isolated cadvisor node-exporter
+      - docker compose -p searchbase-loadtest --project-directory . -f dev/compose/docker-compose.loadtest.yml ps
 
   loadtest:run:
     desc: "Run one clean load-test scenario; use SCENARIO=... PROFILE=smoke|discover|soak"
@@ -141,8 +141,8 @@ tasks:
         /bin/sh -c '
           project="searchbase-loadtest"
           mkdir -p loadtest/results
-          trap "docker compose -p \"$project\" -f docker-compose.loadtest.yml down --volumes --remove-orphans" 0 1 2 15
-          LOADTEST_UID="$(id -u)" LOADTEST_GID="$(id -g)" LOADTEST_GIT_REVISION="$(git rev-parse --verify HEAD)" docker compose -p "$project" -f docker-compose.loadtest.yml --profile generator run --build --rm loadtest --scenario {{.SCENARIO}} --profile {{.PROFILE}} --instance-label {{.INSTANCE_LABEL}} {{if .STAGE_DURATION}}--stage-duration {{.STAGE_DURATION}}{{end}} {{if .RATE}}--rate {{.RATE}}{{end}}
+          trap "docker compose -p \"$project\" --project-directory . -f dev/compose/docker-compose.loadtest.yml down --volumes --remove-orphans" 0 1 2 15
+          LOADTEST_UID="$(id -u)" LOADTEST_GID="$(id -g)" LOADTEST_GIT_REVISION="$(git rev-parse --verify HEAD)" docker compose -p "$project" --project-directory . -f dev/compose/docker-compose.loadtest.yml --profile generator run --build --rm loadtest --scenario {{.SCENARIO}} --profile {{.PROFILE}} --instance-label {{.INSTANCE_LABEL}} {{if .STAGE_DURATION}}--stage-duration {{.STAGE_DURATION}}{{end}} {{if .RATE}}--rate {{.RATE}}{{end}}
         '
 
   loadtest:suite:
@@ -201,4 +201,4 @@ tasks:
           echo "refusing to remove an unexpected Compose project" >&2
           exit 1
         fi
-        docker compose -p "$project" -f docker-compose.loadtest.yml down --volumes --remove-orphans
+        docker compose -p "$project" --project-directory . -f dev/compose/docker-compose.loadtest.yml down --volumes --remove-orphans

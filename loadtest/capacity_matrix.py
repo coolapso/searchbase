@@ -76,8 +76,8 @@ def preflight():
         if not shutil.which(binary):
             raise RuntimeError(f"{binary} is required")
     check = subprocess.run(
-        ["docker", "compose", "-p", "searchbase-loadtest", "-f",
-         "docker-compose.loadtest.yml", "ps", "--status", "running", "-q"],
+        ["docker", "compose", "-p", "searchbase-loadtest", "--project-directory", ".",
+         "-f", "dev/compose/docker-compose.loadtest.yml", "ps", "--status", "running", "-q"],
         cwd=ROOT, text=True, capture_output=True, check=False)
     if check.returncode:
         raise RuntimeError(f"Docker Compose unavailable: {check.stderr.strip()}")

@@ -55,6 +55,13 @@ separate from development Compose services:
 task loadtest:run
 ```
 
+Reports are saved in timestamped directories named for the scenario, profile,
+and instance under `loadtest/results/`.
+
+For repeatable CPU/RAM sweeps and an SVG capacity graph, use
+`task loadtest:matrix -- --dry-run` to preview the matrix, then
+`task loadtest:matrix -- --cpus 2,3,4,6,8 --ram-gib 4,8,12,16`.
+
 See the [load-testing documentation](https://docs.searchbase.md/docs/load-testing/) before running discovery or soak profiles.
 
 ## ⚖️ License
