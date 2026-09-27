@@ -1,3 +1,4 @@
+# Default fetch worker example. Apply this or lightpanda-worker.yaml, not both.
 apiVersion: apps/v1
 kind: Deployment
 metadata:

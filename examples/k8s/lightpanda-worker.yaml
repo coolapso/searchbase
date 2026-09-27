@@ -1,0 +1,58 @@
+# Alternative to crawl-worker.yaml. Apply one worker manifest, not both.
+# The Service keeps the crawl-worker name expected by search-gateway.yaml.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lightpanda-worker
+  labels:
+    app: lightpanda-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lightpanda-worker
+  template:
+    metadata:
+      labels:
+        app: lightpanda-worker
+    spec:
+      containers:
+      - name: lightpanda-worker
+        image: ghcr.io/coolapso/searchbase/lightpanda-worker:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+        env:
+        - name: LIGHTPANDA_DISABLE_TELEMETRY
+          value: "true"
+        - name: LIGHTPANDA_WORKER_CONCURRENCY
+          value: "4"
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8000
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8000
+          periodSeconds: 10
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: crawl-worker
+spec:
+  type: ClusterIP
+  selector:
+    app: lightpanda-worker
+  ports:
+  - port: 8000
+    targetPort: 8000

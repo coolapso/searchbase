@@ -24,6 +24,7 @@ spec:
         - name: SEARCHBASE_PORT
           value: "8080"
         - name: SEARCHBASE_CRAWL_WORKER_ADDRESS
+          # Both worker examples provide this Service; apply only one worker.
           value: "http://crawl-worker.default.svc.cluster.local:8000"
         # - name: SEARCHBASE_DDGS_PROVIDER_ADDRESS
         #   value: "http://ddgs.default.svc.cluster.local:8001"

@@ -145,23 +145,44 @@ deployment template.
 ## Kubernetes
 
 The manifests under `examples/k8s/` are demonstrations, not production
-deployment templates. They create one gateway and one Crawl4AI worker, each
-with an internal ClusterIP Service. From the repository root, apply the active
-manifests to the `default` namespace:
+deployment templates. They create one gateway and your choice of Crawl4AI or
+Lightpanda worker, each with an internal ClusterIP Service. From the repository
+root, apply the Crawl4AI example to the `default` namespace:
 
 ```bash
 kubectl apply -f examples/k8s/crawl-worker.yaml \
   -f examples/k8s/search-gateway.yaml
+```
+
+For the experimental Lightpanda alternative, apply this pair in the `default`
+namespace without applying the Crawl4AI worker manifest:
+
+```bash
+kubectl apply -f examples/k8s/lightpanda-worker.yaml \
+  -f examples/k8s/search-gateway.yaml
+```
+
+With either worker, reach the internal gateway Service locally:
+
+```bash
 kubectl port-forward svc/search-gateway 8080:8080
 ```
 
-The gateway manifest points to `crawl-worker.default.svc.cluster.local` and
-uses the default native search provider. `examples/k8s/ddgs.yaml` is fully
-commented and creates no resources. Port forwarding provides local test access
-because the gateway Service is not externally exposed. For production
-self-hosting, configure your namespace and service addresses, pinned image
-versions, external access, secrets, resource limits, and network policy for
-your environment.
+Both worker manifests provide the `crawl-worker` Service used by the gateway's
+`crawl-worker.default.svc.cluster.local` address. Apply **only one worker
+manifest**: applying the other later changes the Service selector but leaves
+the previous worker Deployment running until you remove it. The Lightpanda
+example uses the published `lightpanda-worker` image, disables upstream
+telemetry, and probes its `/healthz` endpoint. It accepts `js_render` but
+always executes JavaScript, as described above. The resource values in both
+examples are illustrative, not measured sizing recommendations.
+
+The gateway uses the default native search provider. `examples/k8s/ddgs.yaml`
+is fully commented and creates no resources. Port forwarding provides local
+test access because the gateway Service is not externally exposed. For
+production self-hosting, configure your namespace and service addresses,
+pinned image versions, external access, secrets, resource limits, and network
+policy for your environment.
 
 ## Configuration
 
