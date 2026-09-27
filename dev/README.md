@@ -1,8 +1,9 @@
 # Development Compose stacks
 
 `compose/` contains checkout-built stacks for development and isolated load
-testing. User-facing demo stacks belong in `examples/compose/` at the
-repository root. Neither set is a production deployment template.
+testing. User-facing Compose and Kubernetes demos belong in
+`examples/compose/` and `examples/k8s/` at the repository root. Neither set is
+a production deployment template.
 
 From the repository root, use `task dev:up` for Lightpanda or
 `task dev:upcrawl4ai` for Crawl4AI; `task dev:down` stops either stack. The

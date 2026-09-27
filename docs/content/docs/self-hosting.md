@@ -8,13 +8,15 @@ Searchbase can run with different search backends depending on how much infrastr
 
 ## Deployment Options
 
-Searchbase can run locally with Docker Compose examples or in production on Kubernetes.
+Searchbase includes Docker Compose and Kubernetes examples for evaluating the
+services. Adapt the deployment to your environment before production use.
 
 ## Docker Compose Examples
 
 The repository includes user-facing Compose examples under `examples/compose/`
-for quickly trying each backend. The checkout-built development and benchmark
-stacks live under `dev/compose/`; use those when working on Searchbase itself.
+for quickly trying each backend. Kubernetes examples live under
+`examples/k8s/`. The checkout-built development and benchmark stacks live
+under `dev/compose/`; use those when working on Searchbase itself.
 
 {{< hint warning >}}
 The Docker Compose files are demonstration examples only. They are useful for local testing and learning how services connect, but they are not production deployment templates.
@@ -142,11 +144,24 @@ deployment template.
 
 ## Kubernetes
 
+The manifests under `examples/k8s/` are demonstrations, not production
+deployment templates. They create one gateway and one Crawl4AI worker, each
+with an internal ClusterIP Service. From the repository root, apply the active
+manifests to the `default` namespace:
+
 ```bash
-kubectl apply -f k8s/
+kubectl apply -f examples/k8s/crawl-worker.yaml \
+  -f examples/k8s/search-gateway.yaml
+kubectl port-forward svc/search-gateway 8080:8080
 ```
 
-For production self-hosting, prefer Kubernetes or your own hardened container deployment. Review networking, secrets, resource limits, replica counts, ingress, TLS, persistence, and observability for your environment.
+The gateway manifest points to `crawl-worker.default.svc.cluster.local` and
+uses the default native search provider. `examples/k8s/ddgs.yaml` is fully
+commented and creates no resources. Port forwarding provides local test access
+because the gateway Service is not externally exposed. For production
+self-hosting, configure your namespace and service addresses, pinned image
+versions, external access, secrets, resource limits, and network policy for
+your environment.
 
 ## Configuration
 

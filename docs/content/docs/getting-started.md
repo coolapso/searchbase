@@ -19,11 +19,19 @@ The Gateway will be available at `http://localhost:8080`.
 The Compose files are demonstration examples only and are not intended for production deployments. See [Self Hosting](/docs/self-hosting/) for backend-specific examples and deployment notes.
 {{< /hint >}}
 
-### 2. The Production Way (Kubernetes)
-Searchbase is designed to run on Kubernetes. You can scale `search-gateway`, `crawl-worker`, and search backends independently based on traffic, rendering load, and search workload.
+### 2. Try the Kubernetes examples
+
+The example manifests in `examples/k8s/` deploy the gateway and Crawl4AI
+worker to the `default` namespace. They are a starting point for evaluating
+Searchbase on Kubernetes, not a production deployment. From the repository root:
 
 ```bash
-kubectl apply -f k8s/
+kubectl apply -f examples/k8s/crawl-worker.yaml \
+  -f examples/k8s/search-gateway.yaml
+kubectl port-forward svc/search-gateway 8080:8080
 ```
 
-For backend choices, environment variables, and production notes, see [Self Hosting](/docs/self-hosting/).
+The gateway Service is internal; the port-forward exposes it on your machine
+for testing. `examples/k8s/ddgs.yaml` is a commented placeholder and does not
+deploy DDGS. For backend choices and deployment notes, see
+[Self Hosting](/docs/self-hosting/).

@@ -44,7 +44,7 @@ docker compose -f examples/compose/docker-compose.native.yml up
 ```
 The Gateway will be available at `http://localhost:8080`.
 
-`examples/compose/` contains user-facing demo stacks; `dev/compose/` contains checkout-built development and load-test stacks. Neither directory contains production deployment templates. See the [Documentation Site](https://docs.searchbase.md) for backend-specific examples and self-hosting notes.
+`examples/compose/` and `examples/k8s/` contain user-facing demos; `dev/compose/` contains checkout-built development and load-test stacks. These examples are not production deployment templates. See the [Documentation Site](https://docs.searchbase.md) for backend-specific examples and self-hosting notes.
 
 ## Load-test smoke check
 
