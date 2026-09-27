@@ -1,0 +1,20 @@
+FROM --platform=$BUILDPLATFORM golang:1.26-bookworm AS builder
+ARG TARGETOS
+ARG TARGETARCH
+WORKDIR /src
+COPY go.mod ./
+COPY . .
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags="-s -w" -o /lightpanda-worker ./cmd/server
+
+# The official image contains the glibc-linked Lightpanda binary and tini.
+# Pin the observed nightly digest so benchmark comparisons use one browser build.
+FROM lightpanda/browser:nightly@sha256:e3c51980ff9f55894cbeb024adb9c22fe3690dc15eb02f0f42aedd787036e478
+COPY --from=builder /lightpanda-worker /usr/local/bin/lightpanda-worker
+ENV LIGHTPANDA_DISABLE_TELEMETRY=true \
+    LIGHTPANDA_DISABLE_CORE_DUMP=1 \
+    HOME=/tmp \
+    LIGHTPANDA_WORKER_PORT=8000
+USER 65532:65532
+EXPOSE 8000
+HEALTHCHECK --interval=10s --timeout=3s --retries=5 CMD ["/usr/local/bin/lightpanda-worker", "--healthcheck"]
+ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/lightpanda-worker"]

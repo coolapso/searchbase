@@ -1,0 +1,25 @@
+# Demo-only alternative worker backend. Lightpanda always runs JavaScript.
+# Not intended for production use; the Lightpanda base is pinned in Containerfile.
+services:
+  search-gateway:
+    image: ghcr.io/coolapso/searchbase/search-gateway:latest
+    ports:
+      - "8080:8080"
+    environment:
+      SEARCHBASE_PORT: "8080"
+      SEARCHBASE_CRAWL_WORKER_ADDRESS: http://lightpanda-worker:8000
+      SEARCHBASE_SEARCH_PROVIDER: searchbase_ddg
+    depends_on:
+      lightpanda-worker:
+        condition: service_healthy
+
+  lightpanda-worker:
+    build:
+      context: ../../lightpanda-worker
+      dockerfile: Containerfile
+    environment:
+      LIGHTPANDA_WORKER_CONCURRENCY: "4"
+      LIGHTPANDA_WORKER_TIMEOUT_SECONDS: "30"
+      LIGHTPANDA_WORKER_WAIT_MS: "500"
+      LIGHTPANDA_WORKER_OTEL_ENABLED: ${LIGHTPANDA_WORKER_OTEL_ENABLED:-false}
+      LIGHTPANDA_WORKER_OTEL_ENDPOINT: ${LIGHTPANDA_WORKER_OTEL_ENDPOINT:-}

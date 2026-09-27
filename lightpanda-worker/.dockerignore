@@ -1,0 +1,3 @@
+bin/
+*_test.go
+Taskfile.yml

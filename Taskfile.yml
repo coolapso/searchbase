@@ -13,6 +13,9 @@ includes:
   crawl-worker:
     taskfile: ./crawl-worker/Taskfile.yml
     dir: ./crawl-worker
+  lightpanda-worker:
+    taskfile: ./lightpanda-worker/Taskfile.yml
+    dir: ./lightpanda-worker
   ddgs:
     taskfile: ./ddgs/Taskfile.yml
     dir: ./ddgs
@@ -50,6 +53,7 @@ tasks:
     cmds:
       - task: search-gateway:container:build
       - task: crawl-worker:container:build
+      - task: lightpanda-worker:container:build
       - task: ddgs:container:build
 
   container:build:all:
@@ -57,6 +61,7 @@ tasks:
     cmds:
       - task: search-gateway:container:build:all
       - task: crawl-worker:container:build:all
+      - task: lightpanda-worker:container:build:all
       - task: ddgs:container:build:all
 
   container:push:
@@ -64,6 +69,7 @@ tasks:
     cmds: 
       - task: search-gateway:container:push
       - task: crawl-worker:container:push
+      - task: lightpanda-worker:container:push
       - task: ddgs:container:push
     deps: [container:login]
 

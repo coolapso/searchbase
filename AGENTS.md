@@ -31,6 +31,10 @@ The front-facing orchestrator. Built in Go for high concurrency, low memory foot
 The internal heavy-lifter. Completely hidden from the outside world.
 *   **Role:** Headless browser, DOM cleaner, Markdown optimizer.
 *   **Tech Stack:** Python, FastAPI, `crawl4ai`.
+*   **Optional alternative:** `lightpanda-worker/` is an experimental Go HTTP wrapper around the official Lightpanda browser image. It implements the same `POST /extract` JSON shape, accepts but ignores `js_render`, and always executes JavaScript before returning Lightpanda's native Markdown dump. It does not replace the default Crawl4AI worker or promise identical Markdown cleaning. Keep it internal; `LIGHTPANDA_DISABLE_TELEMETRY=true` is set in its container. The worker launches one browser `fetch` process per request with bounded concurrency, timeout, and output size.
+*   **Lightpanda URL boundary:** Before invoking the browser, validate and normalize the target as an absolute HTTP(S) URL with a hostname, no credentials, no whitespace/control characters or backslashes, and a valid port; strip fragments. Validate again in the fetcher so callers cannot bypass the HTTP handler. This is URL syntax validation, not an SSRF or network-access policy; deployments must restrict the worker's network access separately.
+*   **Lightpanda observability:** The Go wrapper has optional OpenTelemetry tracing and metrics over OTLP/HTTP, enabled only with `LIGHTPANDA_WORKER_OTEL_ENABLED=true` and an HTTP(S) OTLP base URL in `LIGHTPANDA_WORKER_OTEL_ENDPOINT`. It continues gateway W3C `traceparent` context across `/extract` and an internal `Lightpanda.fetch` span. Fixed-cardinality metrics cover request outcomes, active requests, request duration, and browser-process duration. Never record fetched URLs, Markdown, request bodies, or raw browser errors in spans or metric attributes. This instruments the wrapper, not the Lightpanda binary; cgroup memory including child processes remains an external collector concern. `LIGHTPANDA_DISABLE_TELEMETRY=true` disables Lightpanda's separate upstream telemetry and does not disable this opt-in wrapper instrumentation.
+*   **Build workflow:** `lightpanda-worker/Taskfile.yml` follows the search-gateway container build/push tasks and is included in root `container:build`, `container:build:all`, and `container:push` aggregates. The release workflow follows the gateway's Docker metadata/build-push action pattern to publish amd64/arm64 images from the release tag in one job. Its pinned Lightpanda runtime base supports both platforms.
 
 ### C. Observability & Logging (search-gateway)
 
@@ -50,7 +54,8 @@ Distributed tracing support for observability and debugging. Not fully tested ye
 *   **Features:** Trace propagation via W3C TraceContext/Baggage, service name attribution.
 
 #### OpenTelemetry Metrics
-Metrics are planned but not implemented yet.
+Gateway metrics are planned but not implemented yet. The optional Lightpanda worker exports its own OTLP/HTTP metrics when explicitly enabled.
+
 
 ### D. Component 2: `crawl-worker` (Python)
 The internal heavy-lifter. Completely hidden from the outside world.
@@ -121,6 +126,7 @@ The internal heavy-lifter. Completely hidden from the outside world.
   "js_render": false
 }
 ```
+
 **Response:**
 ```json
 {
@@ -129,6 +135,8 @@ The internal heavy-lifter. Completely hidden from the outside world.
   "error": ""
 }
 ```
+
+The optional Lightpanda Go worker implements this same request/response contract but ignores `js_render` and always runs JavaScript. Its errors are deliberately generic to avoid exposing requested URLs in gateway error paths. Its Markdown is Lightpanda's native dump, not Crawl4AI's cleaned output.
 
 ## 4. Deployment & CI/CD
 
@@ -153,11 +161,12 @@ User-facing project documentation lives in the Hugo site under `docs/`. The site
 All external contributors must accept `CLA.md` before a pull request can be merged. `.github/workflows/cla.yaml` uses CLA Assistant Lite to require a signature comment and stores accepted signatures on the `cla-signatures` branch at `.github/cla/signatures/v1/cla.json`. Keep `CLA.md`, `CONTRIBUTING.md`, the PR template, the CLA workflow, and the docs Contributing page in sync if the contribution process changes.
 
 ### CI/CD Pipeline (GitHub Actions)
-The project utilizes GitHub Actions to automatically version, build, and publish Docker images to the GitHub Container Registry (GHCR) using `go-semantic-release`. **Taskfiles are used within these workflows to orchestrate the build and push processes.**
-*   **Trigger:** Pushes to the `main` branch or manual workflow dispatch.
+The project utilizes GitHub Actions to version, build, and publish Docker images to the GitHub Container Registry (GHCR) using `go-semantic-release`. The release workflow uses Docker actions for build and push; Taskfiles provide the local build/push equivalents.
+*   **Trigger:** Manual workflow dispatch. The workflow creates a semantic release and then publishes images from its tag when a new version is emitted.
 *   **Images:** 
     *   `ghcr.io/coolapso/searchbase/search-gateway`
     *   `ghcr.io/coolapso/searchbase/crawl-worker`
+    *   `ghcr.io/coolapso/searchbase/lightpanda-worker`
     *   `ghcr.io/coolapso/searchbase/ddgs`
 *   **Workflow Location:** `.github/workflows/release.yaml`
 

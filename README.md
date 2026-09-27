@@ -62,6 +62,13 @@ For repeatable CPU/RAM sweeps and an SVG capacity graph, use
 `task loadtest:matrix -- --dry-run` to preview the matrix, then
 `task loadtest:matrix -- --cpus 2,3,4,6,8 --ram-gib 4,8,12,16`.
 
+An experimental Go-wrapped Lightpanda fetch worker is available through
+`examples/compose/docker-compose.lightpanda.yml`; the default worker remains
+Crawl4AI. Run `task lightpanda-worker:test` or
+`task lightpanda-worker:container:build` for its Taskfile workflow. See
+the [self-hosting documentation](https://docs.searchbase.md/docs/self-hosting/)
+for behavior, limits, the optional load-test backend, and its versioned release image.
+
 See the [load-testing documentation](https://docs.searchbase.md/docs/load-testing/) before running discovery or soak profiles.
 
 ## ⚖️ License

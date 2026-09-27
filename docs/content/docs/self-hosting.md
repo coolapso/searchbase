@@ -36,6 +36,92 @@ SearXNG backend:
 docker compose -f examples/compose/docker-compose.searxng.yml up
 ```
 
+Experimental Lightpanda fetch worker with the native DuckDuckGo search backend:
+
+```bash
+docker compose -f examples/compose/docker-compose.lightpanda.yml up --build
+```
+
+This example builds the Go `/extract` wrapper on top of a pinned digest of
+Lightpanda's official `nightly` container. Only the gateway publishes a host
+port; the worker stays on the Compose network. Update the digest deliberately
+when you want to test a newer browser build. Lightpanda is AGPL-3.0 licensed; review
+its terms before redistribution or deployment. The Go worker uses Lightpanda's
+native Markdown dump with its `clutter` stripping heuristic, which may differ
+in cleaning and content from Crawl4AI.
+Lightpanda executes JavaScript for every fetch; both `js_render: false` and
+`js_render: true` have the same behavior. This is an alternative worker, not
+a new search provider and not an automatic replacement for existing deployments.
+
+The worker accepts `POST /extract` with `{"url":"https://example.org","js_render":false}`
+and returns `{"markdown":"...","success":true,"error":""}`. It also has
+`GET /healthz`. Extraction failures return HTTP 200 with `success:false` and a
+generic error, matching the gateway's existing worker contract without exposing
+the fetched URL. Invalid targets return HTTP 400 before the browser starts:
+the worker accepts absolute HTTP(S) URLs without credentials, whitespace,
+control characters, backslashes, or malformed ports. It normalizes the host
+and removes URL fragments before passing the URL to Lightpanda. This check
+does not prevent requests to private or local network addresses; restrict
+worker network access separately if untrusted clients can request fetches.
+Set `LIGHTPANDA_WORKER_CONCURRENCY` (default `4`),
+`LIGHTPANDA_WORKER_TIMEOUT_SECONDS` (default `30`), and
+`LIGHTPANDA_WORKER_WAIT_MS` (default `500`) to tune it. Set
+`LIGHTPANDA_WORKER_LOG_LEVEL` (`error` by default) for generic, URL-free
+request metadata logs. Its container disables
+Lightpanda's upstream telemetry and core dumps by default; retain those
+settings if rebuilding. A fetch starts a Lightpanda process, so measure its
+process-start overhead and Markdown quality against your real pages.
+
+### Lightpanda worker telemetry
+
+The Go wrapper can export OpenTelemetry traces and metrics to an OTLP/HTTP
+collector. It is off by default and does not expose a Prometheus `/metrics`
+endpoint. Set both variables on the worker (the endpoint must be reachable
+*from its container*):
+
+```bash
+LIGHTPANDA_WORKER_OTEL_ENABLED=true
+LIGHTPANDA_WORKER_OTEL_ENDPOINT=http://otel-collector:4318
+```
+
+The endpoint is an HTTP(S) base URL; the worker appends `/v1/traces` and
+`/v1/metrics`. The Compose example passes these variables through from the
+host but does not create a collector. Configure gateway tracing separately
+with `SEARCHBASE_TRACING_ENABLED=true` and its collector endpoint to see a
+single trace across gateway and worker. The worker accepts W3C `traceparent`
+and creates a server span for `/extract` plus a child span around the browser
+process. It exports completed request counts by fixed outcome (`success`,
+`invalid_request`, `busy_or_timeout`, `extraction_error`), active requests,
+request-duration histograms, and browser-duration histograms. The metric
+export interval is 15 seconds, with a final flush on graceful shutdown.
+
+The spans and metric attributes omit requested URLs, content, and raw browser
+errors. This instruments the Go wrapper, **not** the Lightpanda executable.
+It does not measure browser child-process memory; use cgroup/container
+monitoring for total worker memory, including children. The image's
+`LIGHTPANDA_DISABLE_TELEMETRY=true` controls Lightpanda's separate upstream
+telemetry and remains set even when wrapper OpenTelemetry is enabled.
+
+From the repository root, the worker's Taskfile is available through the
+`lightpanda-worker:` namespace:
+
+```bash
+task lightpanda-worker:test
+task lightpanda-worker:build
+task lightpanda-worker:container:build
+task lightpanda-worker:container:build:all
+```
+
+These build and push tasks follow the same pattern as `search-gateway`.
+`container:build:all` builds for amd64 and arm64 without publishing.
+`task lightpanda-worker:container:push` requires GHCR authentication and
+publishes `latest` and the current Git-derived version to
+`ghcr.io/coolapso/searchbase/lightpanda-worker`. The root `container:build`,
+`container:build:all`, and `container:push` aggregates include Lightpanda.
+The manually dispatched release workflow follows the gateway's Docker
+metadata/build-push pattern, publishing `latest`, full-version, and major.minor
+tags from the semantic-release tag for both architectures.
+
 The root `docker-compose.yml` is intended for development and may start more services than a normal deployment needs.
 
 ```bash
@@ -59,7 +145,7 @@ The `search-gateway` can be configured using the following environment variables
 | Variable | Default | Description |
 | :--- | :--- | :--- |
 | `SEARCHBASE_PORT` | `8080` | The port the gateway listens on. |
-| `SEARCHBASE_CRAWL_WORKER_ADDRESS` | `http://localhost:8000` | The internal URL of the Python crawl worker. |
+| `SEARCHBASE_CRAWL_WORKER_ADDRESS` | `http://localhost:8000` | The internal URL of the Crawl4AI worker or optional Lightpanda-compatible worker. |
 | `SEARCHBASE_SEARCH_PROVIDER` | `searchbase_ddg` | The default search provider to use (`searchbase_ddg`, `ddgs`, `searxng`, `brave`, or `mojeek`). |
 | `SEARCHBASE_DDGS_PROVIDER_ADDRESS` | `http://localhost:8001` | Optional. The URL to the DDGS engine, if `ddgs` provider is used. |
 | `SEARCHBASE_SEARXNG_PROVIDER_ADDRESS` | *(empty)* | Optional. The URL to the SearXNG instance, if `searxng` provider is used (e.g. `http://localhost:8080`). |

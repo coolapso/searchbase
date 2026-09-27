@@ -1,0 +1,46 @@
+version: '3'
+
+vars:
+  NAME: lightpanda-worker
+  CONTAINER_REGISTRY: ghcr.io/coolapso/searchbase
+
+tasks:
+  test:
+    desc: "Run Go tests for the Lightpanda worker"
+    cmds:
+      - go test ./...
+
+  build:
+    desc: "Build the Lightpanda worker Go binary locally"
+    cmds:
+      - mkdir -p bin
+      - go build -o bin/lightpanda-worker ./cmd/server
+
+  container:build:
+    desc: "Build the Lightpanda worker container image"
+    cmds:
+      - docker buildx build -t {{.NAME}}:latest -f Containerfile .
+
+  container:build:amd64:
+    desc: "Build the linux/amd64 Lightpanda worker image"
+    cmds:
+      - docker buildx build --platform linux/amd64 -t {{.NAME}}:latest -f Containerfile .
+
+  container:build:arm:
+    desc: "Build the linux/arm64 Lightpanda worker image"
+    cmds:
+      - docker buildx build --platform linux/arm64 -t {{.NAME}}:latest -f Containerfile .
+
+  container:build:all:
+    desc: "Build the Lightpanda worker image for both platforms"
+    cmds:
+      - docker buildx build --platform linux/amd64,linux/arm64 -t {{.NAME}}:latest -f Containerfile .
+
+  container:push:
+    desc: "Push the Lightpanda worker image to the registry"
+    cmds:
+      - |
+        git fetch --tags
+        version=$(git describe --tags --always --dirty="-dev")
+        name={{.CONTAINER_REGISTRY}}/{{.NAME}}
+        docker buildx build --push --platform linux/amd64,linux/arm64 -t ${name}:latest -t ${name}:${version#v} -f Containerfile .

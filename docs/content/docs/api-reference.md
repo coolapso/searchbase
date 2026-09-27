@@ -56,7 +56,7 @@ You can also build your own scripts or use LangChain / LlamaIndex by hitting the
   "js_render": false
 }
 ```
-*(Set `js_render: true` if you need the worker to execute JavaScript for Single Page Applications, though it is slower).*
+*(With the default Crawl4AI worker, set `js_render: true` when JavaScript is needed. The optional Lightpanda worker always executes JavaScript and ignores this field.)*
 
 **Response:**
 ```json
