@@ -12,7 +12,7 @@ services:
 
   crawl-worker:
     build:
-      context: ./crawl-worker
+      context: ${LOADTEST_WORKER_CONTEXT:-./crawl-worker}
       dockerfile: Containerfile
     environment:
       CRAWLER_LOG_LEVEL: error

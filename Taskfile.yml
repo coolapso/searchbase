@@ -169,6 +169,11 @@ tasks:
     cmds:
       - go run ./cmd/compare {{.CLI_ARGS}}
 
+  loadtest:matrix:
+    desc: "Run a bounded CPU/RAM capacity matrix and generate an SVG graph (options after --)"
+    cmds:
+      - python3 loadtest/capacity_matrix.py {{.CLI_ARGS}}
+
   loadtest:down:
     desc: "Tear down only the searchbase-loadtest Compose project and its volumes"
     cmds:

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/coolapso/searchbase/loadtest/internal/loadtest"
@@ -26,7 +27,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	}
-	resultDir := filepath.Join(*out, fmt.Sprintf("run-%d", time.Now().UnixNano()))
+	resultDir := filepath.Join(*out, resultDirectoryName(time.Now().UTC(), s.Name, *profile, *instance))
 	r, err := loadtest.Run(context.Background(), s, loadtest.RunConfig{Profile: *profile, Rate: *rate, StageDuration: *duration, Output: resultDir, InstanceLabel: *instance, Comparable: *comparable, Targets: loadtest.Targets{Gateway: env("LOADTEST_GATEWAY", "http://search-gateway:8080"), IsolatedGateway: env("LOADTEST_ISOLATED_GATEWAY", "http://search-gateway-isolated:8080"), Worker: env("LOADTEST_WORKER", "http://crawl-worker:8000")}, Metrics: map[string]string{"search-gateway": "http://cadvisor:8080/metrics", "crawl-worker": "http://cadvisor:8080/metrics", "fixture": "http://cadvisor:8080/metrics", "cadvisor": "http://cadvisor:8080/metrics", "node-exporter": "http://cadvisor:8080/metrics", "loadtest": "http://cadvisor:8080/metrics", "host": "http://node-exporter:9100/metrics"}, Revision: os.Getenv("LOADTEST_GIT_REVISION")})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -34,11 +35,35 @@ func main() {
 	}
 	fmt.Printf("report: %s/report.json; safe capacity: %.2f ops/s\n", resultDir, r.SafeCapacity)
 }
+
+func resultDirectoryName(at time.Time, scenario, profile, instance string) string {
+	return fmt.Sprintf("%s-%09d-%s-%s-%s", at.UTC().Format("20060102-150405"), at.Nanosecond(), directorySlug(scenario, 48), directorySlug(profile, 16), directorySlug(instance, 64))
+}
+
+func directorySlug(value string, limit int) string {
+	var b strings.Builder
+	separator := false
+	for _, r := range strings.ToLower(value) {
+		if b.Len() >= limit {
+			break
+		}
+		if r >= 'a' && r <= 'z' || r >= '0' && r <= '9' {
+			b.WriteRune(r)
+			separator = false
+		} else if b.Len() > 0 && !separator {
+			b.WriteByte('-')
+			separator = true
+		}
+	}
+	if slug := strings.Trim(b.String(), "-"); slug != "" {
+		return slug
+	}
+	return "unknown"
+}
+
 func env(k, d string) string {
 	if v := os.Getenv(k); v != "" {
 		return v
 	}
 	return d
 }
-
-var _ = time.Second

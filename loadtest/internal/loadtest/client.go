@@ -66,10 +66,20 @@ func (c *Client) post(ctx context.Context, url string, payload any) (string, err
 		return "transport", err
 	}
 	defer resp.Body.Close()
-	_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 2<<20))
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 2<<20))
 		return fmt.Sprintf("http_%d", resp.StatusCode), fmt.Errorf("unexpected status %d", resp.StatusCode)
 	}
+	if strings.HasSuffix(url, "/extract") {
+		var result struct {
+			Success bool `json:"success"`
+		}
+		if err := json.NewDecoder(io.LimitReader(resp.Body, 2<<20)).Decode(&result); err != nil || !result.Success {
+			return "extract_failure", fmt.Errorf("worker extraction failed")
+		}
+		return "", nil
+	}
+	_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 2<<20))
 	return "", nil
 }
 func (c *Client) mcpHTTP(ctx context.Context, base, tool string, args map[string]any) (string, error) {

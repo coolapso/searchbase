@@ -65,6 +65,31 @@ services. If a run is interrupted, clean up its exact project with:
 task loadtest:down
 ```
 
+To test the optional Lightpanda worker against the same private fixtures,
+select its build context. The `crawl-worker` service name stays the same so
+gateway routing and resource sampling remain compatible. Distinguish this
+backend in `INSTANCE_LABEL` when running one scenario directly:
+
+```bash
+LOADTEST_WORKER_CONTEXT=./lightpanda-worker \
+  task loadtest:run SCENARIO=worker-javascript PROFILE=discover \
+  INSTANCE_LABEL=co-located-lightpanda-4cpu-8g
+```
+
+Set the same CPU/RAM environment limits as for Crawl4AI when comparing them.
+For direct worker scenarios, the generator counts JSON `success:false` as a
+failure even when the worker returns HTTP 200. Lightpanda always executes
+JavaScript, but the `worker-static` and `worker-javascript` scenarios still use
+different fixture pages; do not treat them as an isolated `js_render` toggle.
+Older direct-worker reports may have counted such HTTP-200 extraction failures
+as successes, so rerun Crawl4AI baselines before comparing capacity numbers.
+
+Result directories are named with the UTC start time, scenario, profile, and
+instance label, for example
+`20260924-151828-178366035-worker-javascript-discover-crawler-worker-javascript-8g-2cpu/`.
+They sort by start time. Older `run-<number>/` directories retain their names;
+their `summary.md` and `report.json` identify the workload.
+
 ## Capacity workflow
 
 Use `smoke` first to verify the local Docker/Chromium/exporter setup. Then use
@@ -93,7 +118,7 @@ LOADTEST_WORKER_MEMORY=1g LOADTEST_GATEWAY_MEMORY=512m \
   STAGE_DURATION=60s INSTANCE_LABEL=co-located-2gb-profile
 ```
 
-Read `summary.md` in the newest `loadtest/results/run-*/` directory. The answer
+Read `summary.md` in the newest directory under `loadtest/results/`. The answer
 to “how many requests before it crumbles?” is the first unstable target rate;
 use the reported `safe_capacity` rather than the last stable rate for a
 production starting point. This test must be repeated from a separate generator
@@ -127,7 +152,7 @@ production operation mix before using it for a scaling decision.
 Compare reports from separate, compatible runs with no price estimation:
 
 ```bash
-task loadtest:compare -- loadtest/results/run-a/report.json loadtest/results/run-b/report.json
+task loadtest:compare -- "loadtest/results/<first-run>/report.json" "loadtest/results/<second-run>/report.json"
 ```
 
 Each result directory has:
@@ -144,3 +169,66 @@ interference and are not treated as application capacity totals.
 
 An interrupted, exporter-incomplete, reset, OOM/restart, or generator-overload
 run is retained but must not be used for sizing.
+
+## Repeatable CPU and RAM matrix
+
+`task loadtest:matrix` runs the isolated stack sequentially across a worker
+CPU/RAM grid, up to 8 CPUs and 16 GiB. It does not change the host's physical
+memory allocation: the values are Docker container limits. Its default grid is
+1, 2, 3, 4, 6, and 8 worker CPUs × 2, 4, 8, 12, and 16 GiB, for each of
+`worker-static`, `worker-javascript`, and `core-rest-fetch-javascript`. That is
+90 configurations before optional repeats and can take many hours; start with
+a smaller grid. Run only one matrix at a time on an otherwise quiet host.
+
+```bash
+# Preview the commands without starting containers.
+task loadtest:matrix -- --cpus 2,3,4 --ram-gib 4,8,16 \
+  --scenarios worker-javascript,core-rest-fetch-javascript --dry-run
+
+# Run the chosen grid. Every cell starts with discovery, then two fixed-rate
+# midpoint probes between the last stable and first unstable discovery rates.
+task loadtest:matrix -- --cpus 2,3,4 --ram-gib 4,8,16 \
+  --scenarios worker-javascript,core-rest-fetch-javascript \
+  --stage-duration 60s --refine-steps 2
+
+# Run the same matrix against the optional Lightpanda worker.
+task loadtest:matrix -- --worker-backend lightpanda --cpus 2,3,4 \
+  --ram-gib 4,8,16 --scenarios worker-javascript,core-rest-fetch-javascript
+
+# Rebuild a graph from a saved or interrupted matrix without running Docker.
+task loadtest:matrix -- --plot-only loadtest/results/matrix-YYYYMMDD-HHMMSS
+```
+
+Use `--repeats 3` to run each configuration three times; the plotted value is
+the median of valid repeats. The script randomizes cell order with a fixed seed
+(`--seed`) to reduce time/order bias. It leaves each raw `report.json` in its
+normal named run directory. A separate `loadtest/results/matrix-*/` directory
+contains `matrix.json` (progress and links to raw reports), `capacity.csv`,
+`summary.md`, and `capacity.svg` (open in a browser). Progress and the graph
+are saved after each run, including on interruption. Failed or invalid cells
+are shown as missing, not zero.
+
+The graph labels each cell with a conservative safe successful-request rate,
+the discovery run's highest sampled worker working set (MiB below 1 GiB),
+and marginal gains from the next lower tested CPU (`C`) and RAM (`M`) setting.
+The memory figure is sampled every five seconds, so brief browser subprocess
+peaks can be missed; do not use it alone for RAM sizing. `capacity.csv` carries
+the exact sampled MiB values.
+Gains near zero or negative are candidates for diminishing
+returns, **not proof** without repeats. The script checks fixed-rate probes
+against the low-load p95 baseline, request errors, achieved target rate, and
+memory measurements. Discovery still uses doubled rates, so even refined
+capacity is an estimate, not an exact cliff or 30-minute endurance result.
+Cells marked `≥` reached the scenario's maximum test rate without saturation;
+they use neutral coloring and are lower bounds, not measured capacity limits.
+They are excluded from marginal-gain and horizontal-proxy
+decisions. Raise the scenario's `max_rate` in a copied scenario and rerun if
+those cells matter.
+
+Cells marked `H` compare one large worker to an *idealized* pair of smaller
+workers with the same total worker CPU and RAM. This assumes linear scaling and
+does not measure two replicas, their gateway/host overhead, load balancing,
+or any price. Treat it as a candidate for a later real multi-replica test,
+not a recommendation to scale horizontally. On this co-located setup, the
+generator and observers also contend with the services; repeat promising
+configurations with a separate generator VM before making hosting decisions.
