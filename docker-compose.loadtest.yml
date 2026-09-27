@@ -9,6 +9,9 @@ services:
       FIXTURE_LATENCY: ${LOADTEST_FIXTURE_LATENCY:-0ms}
       FIXTURE_FAILURE_PERCENT: ${LOADTEST_FIXTURE_FAILURE_PERCENT:-0}
     networks: [benchmark]
+    # Trusted test-only collector: Docker's API remains powerful despite :ro.
+    volumes: ["/var/run/docker.sock:/var/run/docker.sock:ro"]
+    ports: ["${LOADTEST_BIND_ADDRESS:-127.0.0.1}:18082:8081"]
 
   crawl-worker:
     build:
@@ -91,12 +94,12 @@ services:
       dockerfile: Containerfile
     profiles: [generator]
     user: "${LOADTEST_UID:-1000}:${LOADTEST_GID:-1000}"
-    group_add: ["${LOADTEST_DOCKER_GID:-0}"]
+    environment:
+      LOADTEST_GIT_REVISION: "${LOADTEST_GIT_REVISION:-unknown}"
     depends_on: [search-gateway, search-gateway-isolated, crawl-worker, cadvisor]
     networks: [benchmark]
     volumes:
       - "./loadtest/results:/results"
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
 
 networks:
   benchmark:

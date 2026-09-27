@@ -5,8 +5,10 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/coolapso/searchbase/loadtest/internal/loadtest"
@@ -28,12 +30,23 @@ func main() {
 		os.Exit(2)
 	}
 	resultDir := filepath.Join(*out, resultDirectoryName(time.Now().UTC(), s.Name, *profile, *instance))
-	r, err := loadtest.Run(context.Background(), s, loadtest.RunConfig{Profile: *profile, Rate: *rate, StageDuration: *duration, Output: resultDir, InstanceLabel: *instance, Comparable: *comparable, Targets: loadtest.Targets{Gateway: env("LOADTEST_GATEWAY", "http://search-gateway:8080"), IsolatedGateway: env("LOADTEST_ISOLATED_GATEWAY", "http://search-gateway-isolated:8080"), Worker: env("LOADTEST_WORKER", "http://crawl-worker:8000")}, Metrics: map[string]string{"search-gateway": "http://cadvisor:8080/metrics", "crawl-worker": "http://cadvisor:8080/metrics", "fixture": "http://cadvisor:8080/metrics", "cadvisor": "http://cadvisor:8080/metrics", "node-exporter": "http://cadvisor:8080/metrics", "loadtest": "http://cadvisor:8080/metrics", "host": "http://node-exporter:9100/metrics"}, Revision: os.Getenv("LOADTEST_GIT_REVISION")})
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	cadvisor := env("LOADTEST_CADVISOR", "http://cadvisor:8080/metrics")
+	metrics := map[string]string{"search-gateway": cadvisor, "search-gateway-isolated": cadvisor, "crawl-worker": cadvisor, "fixture": cadvisor, "cadvisor": cadvisor, "node-exporter": cadvisor, "host": env("LOADTEST_NODE_EXPORTER", "http://node-exporter:9100/metrics")}
+	if !*comparable {
+		metrics["loadtest"] = cadvisor
+	}
+	r, err := loadtest.Run(ctx, s, loadtest.RunConfig{Profile: *profile, Rate: *rate, StageDuration: *duration, Output: resultDir, InstanceLabel: *instance, Comparable: *comparable, Targets: loadtest.Targets{Gateway: env("LOADTEST_GATEWAY", "http://search-gateway:8080"), IsolatedGateway: env("LOADTEST_ISOLATED_GATEWAY", "http://search-gateway-isolated:8080"), Worker: env("LOADTEST_WORKER", "http://crawl-worker:8000"), Fixture: env("LOADTEST_FIXTURE", "http://fixture:8081")}, Metrics: metrics, DockerMetrics: env("LOADTEST_DOCKER_METRICS", "http://fixture:8081/docker-metrics"), Revision: os.Getenv("LOADTEST_GIT_REVISION")})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	fmt.Printf("report: %s/report.json; safe capacity: %.2f ops/s\n", resultDir, r.SafeCapacity)
+	unit := "ops/s"
+	if s.Mode == "idle" {
+		unit = "sessions"
+	}
+	fmt.Printf("report: %s/report.json; safe capacity: %.2f %s\n", resultDir, r.SafeCapacity, unit)
 }
 
 func resultDirectoryName(at time.Time, scenario, profile, instance string) string {

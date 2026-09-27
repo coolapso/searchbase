@@ -1,1 +1,7 @@
-{"name":"core-mcp-sse-idle","kind":"mcp-sse-search","target":"gateway","start_rate":0,"payload":"small","mode":"idle","idle_sessions":100}
+name: core-mcp-sse-idle
+kind: mcp-sse-search
+target: gateway
+start_rate: 0
+mode: idle
+idle_sessions: 100
+max_sessions: 1600

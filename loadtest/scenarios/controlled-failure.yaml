@@ -1,1 +1,12 @@
-{"name":"controlled-failure","kind":"rest-search","target":"gateway","start_rate":1,"payload":"small","mode":"open","strict_p95_ms":30000}
+name: controlled-failure
+kind: fixture-status
+target: fixture
+start_rate: 1
+max_rate: 1
+mode: open
+non_sizing: true
+operations:
+  - {kind: fixture-status, target: fixture, weight: 1}
+  - {kind: fixture-invalid-json, target: fixture, weight: 1}
+  - {kind: fixture-timeout, target: fixture, weight: 1}
+  - {kind: fixture-disconnect, target: fixture, weight: 1}

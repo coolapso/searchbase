@@ -5,6 +5,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -12,6 +13,8 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
+
+	"github.com/coolapso/searchbase/loadtest/internal/loadtest"
 )
 
 type searchResponse struct {
@@ -28,14 +31,98 @@ var requests atomic.Int64
 func main() {
 	latency, _ := time.ParseDuration(env("FIXTURE_LATENCY", "0ms"))
 	failure, _ := strconv.Atoi(env("FIXTURE_FAILURE_PERCENT", "0"))
+	addr := ":" + env("FIXTURE_PORT", "8081")
+	log.Printf("fixture listening on %s", addr)
+	log.Fatal(http.ListenAndServe(addr, fixtureHandler(latency, failure)))
+}
+
+func fixtureHandler(latency time.Duration, failure int) http.Handler {
 	mux := http.NewServeMux()
+	mux.HandleFunc("/docker-metrics", func(w http.ResponseWriter, r *http.Request) {
+		service := r.URL.Query().Get("service")
+		if !allowedService(service) {
+			http.Error(w, "unknown service", http.StatusBadRequest)
+			return
+		}
+		sample, err := loadtest.DockerSample(service)
+		if err != nil {
+			http.Error(w, "collector unavailable", http.StatusServiceUnavailable)
+			return
+		}
+		w.Header().Set("Content-Type", "text/plain; version=0.0.4")
+		label := `{container_label_com_docker_compose_service="` + service + `"}`
+		for _, metric := range []struct {
+			name  string
+			value float64
+		}{
+			{"container_cpu_usage_seconds_total", sample.CPUSeconds},
+			{"container_spec_cpu_quota", sample.CPUQuotaCores * 100000},
+			{"container_spec_cpu_period", 100000},
+			{"container_cpu_cfs_periods_total", sample.Periods},
+			{"container_cpu_cfs_throttled_periods_total", sample.ThrottledPeriods},
+			{"container_memory_working_set_bytes", sample.WorkingSetBytes},
+			{"container_spec_memory_limit_bytes", sample.LimitBytes},
+			{"container_oom_events_total", sample.OOMEvents},
+			{"container_restart_count", sample.Restarts},
+			{"container_start_time_seconds", sample.StartedAtSeconds},
+		} {
+			fmt.Fprintf(w, "%s%s %g\n", metric.name, label, metric.value)
+		}
+	})
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
+	mux.HandleFunc("/failure/status", func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "controlled failure", http.StatusServiceUnavailable)
+	})
+	mux.HandleFunc("/failure/invalid-json", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte("{"))
+	})
+	mux.HandleFunc("/failure/timeout", func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case <-time.After(2 * time.Second):
+			w.WriteHeader(http.StatusNoContent)
+		case <-r.Context().Done():
+		}
+	})
+	mux.HandleFunc("/failure/disconnect", func(w http.ResponseWriter, r *http.Request) {
+		if h, ok := w.(http.Hijacker); ok {
+			conn, _, err := h.Hijack()
+			if err == nil {
+				_ = conn.Close()
+			}
+		}
+	})
 	mux.HandleFunc("/search/text", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "method", 405)
 			return
 		}
-		reply(w, latency, failure, searchResponse{Results: []result{{"Fixture small result", "http://fixture:8081/site/small", "deterministic fixture"}, {"Fixture medium result", "http://fixture:8081/site/medium", "deterministic fixture"}, {"Fixture large result", "http://fixture:8081/site/large", "deterministic fixture"}}})
+		var request struct {
+			Query string `json:"query"`
+		}
+		if err := json.NewDecoder(io.LimitReader(r.Body, 4096)).Decode(&request); err != nil {
+			http.Error(w, "invalid request", http.StatusBadRequest)
+			return
+		}
+		size := "small"
+		if strings.HasSuffix(request.Query, "-medium") {
+			size = "medium"
+		}
+		if strings.HasSuffix(request.Query, "-large") {
+			size = "large"
+		}
+		bytes := 128
+		if size == "medium" {
+			bytes = 4096
+		}
+		if size == "large" {
+			bytes = 65536
+		}
+		results := make([]result, 3)
+		for i := range results {
+			results[i] = result{Title: "Fixture result", Href: "http://fixture:8081/site/" + size, Body: strings.Repeat("deterministic fixture ", bytes/22+1)}
+		}
+		reply(w, latency, failure, searchResponse{Results: results})
 	})
 	mux.HandleFunc("/extract", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -65,9 +152,7 @@ func main() {
 		}
 		fmt.Fprintf(w, "<!doctype html><title>Fixture static</title><main><h1>Fixture</h1><p>%s</p></main>", body)
 	})
-	addr := ":" + env("FIXTURE_PORT", "8081")
-	log.Printf("fixture listening on %s", addr)
-	log.Fatal(http.ListenAndServe(addr, mux))
+	return mux
 }
 func reply(w http.ResponseWriter, latency time.Duration, failure int, payload any) {
 	if latency > 0 {
@@ -84,6 +169,14 @@ func reply(w http.ResponseWriter, latency time.Duration, failure int, payload an
 func allowed(s string) bool {
 	for _, v := range []string{"small", "medium", "large", "small-js", "medium-js", "large-js"} {
 		if s == v {
+			return true
+		}
+	}
+	return false
+}
+func allowedService(name string) bool {
+	for _, allowed := range []string{"search-gateway", "search-gateway-isolated", "crawl-worker", "fixture", "cadvisor", "node-exporter", "loadtest"} {
+		if name == allowed {
 			return true
 		}
 	}

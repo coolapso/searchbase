@@ -1,1 +1,13 @@
-{"name":"payload-sweep","kind":"rest-fetch","target":"isolated-gateway","start_rate":1,"payload":"large","mode":"open"}
+name: payload-sweep
+kind: sweep
+target: gateway
+start_rate: 1
+max_rate: 1
+warmup_seconds: 15
+mode: sweep
+non_sizing: true
+payload_classes: [small, medium, large]
+operations:
+  - {kind: rest-search, target: gateway, weight: 1}
+  - {kind: rest-fetch, target: gateway, weight: 1}
+  - {kind: rest-fetch, target: gateway, js_render: true, weight: 1}

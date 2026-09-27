@@ -36,11 +36,15 @@ never a public interface. Set `LOADTEST_BIND_ADDRESS` only to a private,
 firewalled interface when a remote observer is required.
 
 On Docker Engine versions where cAdvisor cannot resolve container layer metadata,
-the generator uses the Docker Engine stats API as a memory-only fallback. The
-generator mounts `/var/run/docker.sock` read-only and receives the host Docker
-group ID only for this purpose. A read-only socket mount does not make the
-Docker API read-only, so run this suite only from this trusted checkout on a
-host you control; never add that mount to a production workload.
+the fixture acts as a target-side collector. It reads Docker's stats/inspect API
+and exposes only aggregate CPU, CPU quota/throttling, working-set memory,
+memory limit, restart, and OOM metrics at `/docker-metrics` (port `18082`).
+The fixture mounts `/var/run/docker.sock` read-only, which **does not** make
+Docker API operations read-only. Run this trusted test-only project on a host
+you control, restrict port `18082` to your private generator VM, and never put
+the socket or collector in a production workload. The generator has no Docker
+socket. cAdvisor is still used for network and block-I/O counters when its
+container metrics are available.
 
 ## First run
 
@@ -64,6 +68,10 @@ services. If a run is interrupted, clean up its exact project with:
 ```bash
 task loadtest:down
 ```
+
+The runner shows a live aggregate-only dashboard with throughput and latency
+sparklines plus one resource row per component when attached to a terminal.
+Piped/non-interactive output is plain periodic text. Both omit request inputs.
 
 To test the optional Lightpanda worker against the same private fixtures,
 select its build context. The `crawl-worker` service name stays the same so
@@ -93,10 +101,13 @@ their `summary.md` and `report.json` identify the workload.
 ## Capacity workflow
 
 Use `smoke` first to verify the local Docker/Chromium/exporter setup. Then use
-`discover` on a quiet target VM; it warms up, doubles the scenario rate through
-60-second stages, stops on persistent saturation, and stores the last stable
-rate. `soak` holds the explicit `RATE` supplied from the discovery result for
-30 minutes.
+`discover` on a quiet target VM; it warms up for 30 seconds, doubles the
+scenario rate through 60-second stages, then tests up to five binary midpoints
+between the last stable and first unstable target. It cools down for five
+seconds. `soak` holds the explicit `RATE` supplied from a previous discovery
+report for 30 minutes, then cools down. `soak` now rejects a missing `RATE`.
+`STAGE_DURATION` overrides the measured stage duration for short development
+checks; do not use abbreviated stages for sizing.
 
 ```bash
 task loadtest:run SCENARIO=core-rest-fetch-static PROFILE=discover INSTANCE_LABEL=vm-4vcpu-8gb
@@ -124,30 +135,66 @@ use the reported `safe_capacity` rather than the last stable rate for a
 production starting point. This test must be repeated from a separate generator
 host before treating it as an instance-sizing decision.
 
-For credible instance sizing, run the gateway and worker on the VM being sized
-and run the same generator image from a second VM on its private network. Give
-the runner the target URLs through `LOADTEST_GATEWAY`,
-`LOADTEST_ISOLATED_GATEWAY`, and `LOADTEST_WORKER`, then use a non-`co-located`
-`INSTANCE_LABEL` and `--comparable` when invoking the generator directly. Do
-not treat a report labelled `co-located` as a capacity recommendation.
+For credible instance sizing, run the gateway and worker on the target VM and
+run the generator from a second quiet VM on the same private network. On the
+target, bind the benchmark ports only to its private IP and firewall them to
+the generator VM:
+
+```bash
+LOADTEST_BIND_ADDRESS=10.0.0.10 task loadtest:up
+# When finished: task loadtest:down
+```
+
+On the generator VM, use the same checkout and Go toolchain. Replace the
+example IP with the target's private IP:
+
+```bash
+cd loadtest
+LOADTEST_GATEWAY=http://10.0.0.10:18080 \
+LOADTEST_CADVISOR=http://10.0.0.10:18081/metrics \
+LOADTEST_DOCKER_METRICS=http://10.0.0.10:18082/docker-metrics \
+LOADTEST_NODE_EXPORTER=http://10.0.0.10:19100/metrics \
+LOADTEST_GIT_REVISION="$(git -C .. rev-parse HEAD)" \
+go run ./cmd/loadtest --scenario core-rest-fetch-javascript --profile discover \
+  --scenarios ./scenarios --output ./results \
+  --instance-label target-4vcpu-8g --comparable
+```
+
+The collector and exporters are read-only HTTP endpoints from the generator's
+point of view, but the target-side collector still holds the powerful Docker
+socket. The runner accepts only fixed Compose service names or private/loopback
+IP targets. The standard Compose file publishes the gateway, not the direct
+worker or isolated gateway; use the gateway REST/MCP scenarios in this remote
+workflow unless you deliberately expose those internal services on a private,
+firewalled interface. Do not treat a `co-located` report as a production
+capacity recommendation.
 
 The runner marks a stage unstable after two sample intervals when unexpected
 failures exceed 1%, p95 doubles from baseline, a scenario SLO is exceeded,
-memory is above 85% of a limit, CPU throttling exceeds 5%, a target restarts or
-OOMs, or the generator misses more than 1% of scheduled requests. The report's
+target CPU or memory exceeds 85% of its quota/limit, host memory exceeds 85%,
+CPU throttling exceeds 5% of scheduled periods, a target restarts or OOMs, or
+the generator misses more than 1% of scheduled requests. The report's
 safe sustained capacity is 70% of the last stable achieved rate. Use the first
 limiting signal and its resource utilisation as the conservative scale-out
 trigger; never infer cloud prices from these reports.
 
 ## Scenarios and reports
 
-Scenario definitions live in `loadtest/scenarios/` and are JSON-compatible YAML
-so they remain dependency-free and reviewable. Available core scenarios include
+Scenario definitions live in `loadtest/scenarios/` as strictly validated YAML.
+Available core scenarios include
 gateway REST search/fetch, direct static and JavaScript worker fetches, combined
 REST fetches, Streamable HTTP MCP search/fetch, active and idle SSE MCP,
 payload sweep, mixed traffic, and controlled failures. `core-mixed` is a
 starting point for tuning; adjust a copied scenario to represent a known
-production operation mix before using it for a scaling decision.
+production operation mix before using it for a scaling decision. The supplied
+`core-mixed` weights are 40% REST search, 30% MCP HTTP search, 25% static REST
+fetch, and 5% JavaScript REST fetch. `payload-sweep` warms the worker for 15
+seconds, then runs each of three operation types at small, medium, and large fixture payload sizes; it and
+`controlled-failure` are non-sizing scenarios. Idle SSE discovery counts open
+sessions (100, 200, 400, etc.), not requests per second.
+
+Run diagnostics separately from the capacity suite with
+`task loadtest:diagnostics`.
 
 Compare reports from separate, compatible runs with no price estimation:
 
@@ -161,14 +208,19 @@ Each result directory has:
 - `samples.csv` — periodic throughput, latency, active work, errors, and misses;
 - `summary.md` — a concise human hand-off.
 
-The report samples working-set memory every five seconds. `summary.md` shows
+The report samples working-set memory and CPU counters every five seconds.
+Latency uses a bounded logarithmic histogram (at most about 1% bucket width)
+so a long soak does not retain every request duration. `summary.md` shows
 the peak for the gateway, worker (including Chromium child processes), fixture,
 generator, exporters, and host; `samples.csv` includes gateway, worker, and
-host memory columns. Fixture/exporter/generator readings diagnose benchmark
+host memory and gateway/worker CPU columns. Fixture/exporter/generator readings diagnose benchmark
 interference and are not treated as application capacity totals.
 
 An interrupted, exporter-incomplete, reset, OOM/restart, or generator-overload
-run is retained but must not be used for sizing.
+run is retained with `invalid_reasons` and `safe_capacity: 0`; it must not be
+used for sizing. A smoke report is functional evidence only, even if it has a
+nonzero calculated safe value. Stage `achieved_rate` divides successful
+operations by the scheduled stage window, not by resource-sampling time.
 
 ## Repeatable CPU and RAM matrix
 

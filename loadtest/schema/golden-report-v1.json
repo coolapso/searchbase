@@ -1,1 +1,22 @@
-{"schema_version":"searchbase-load-report/v1","run_id":"golden","suite":"searchbase-core","scenario":"gateway-rest-search","profile":"smoke","comparable":false,"instance_label":"co-located","started_at":"2026-01-01T00:00:00Z","finished_at":"2026-01-01T00:00:15Z","detected_cpus":1,"detected_memory_bytes":1,"phases":[],"throughput":1,"latency":{"count":1,"p50_ms":1,"p95_ms":1,"p99_ms":1},"errors":{},"samples":[],"last_stable_rate":1,"safe_capacity":0.7}
+{
+  "schema_version": "searchbase-load-report/v1",
+  "run_id": "golden",
+  "suite": "searchbase-core",
+  "scenario": "gateway-rest-search",
+  "mode": "open",
+  "js_render": false,
+  "profile": "smoke",
+  "comparable": false,
+  "instance_label": "co-located",
+  "started_at": "2026-01-01T00:00:00Z",
+  "finished_at": "2026-01-01T00:00:15Z",
+  "detected_cpus": 2,
+  "detected_memory_bytes": 2147483648,
+  "phases": [],
+  "throughput": 0,
+  "latency": {"count": 0, "p50_ms": 0, "p95_ms": 0, "p99_ms": 0},
+  "errors": {},
+  "samples": [],
+  "last_stable_rate": 0,
+  "safe_capacity": 0
+}

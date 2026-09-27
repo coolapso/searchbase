@@ -142,11 +142,11 @@ tasks:
           project="searchbase-loadtest"
           mkdir -p loadtest/results
           trap "docker compose -p \"$project\" -f docker-compose.loadtest.yml down --volumes --remove-orphans" 0 1 2 15
-          LOADTEST_UID="$(id -u)" LOADTEST_GID="$(id -g)" LOADTEST_DOCKER_GID="$(stat -c %g /var/run/docker.sock)" docker compose -p "$project" -f docker-compose.loadtest.yml --profile generator run --build --rm loadtest --scenario {{.SCENARIO}} --profile {{.PROFILE}} --instance-label {{.INSTANCE_LABEL}} {{if .STAGE_DURATION}}--stage-duration {{.STAGE_DURATION}}{{end}} {{if .RATE}}--rate {{.RATE}}{{end}}
+          LOADTEST_UID="$(id -u)" LOADTEST_GID="$(id -g)" LOADTEST_GIT_REVISION="$(git rev-parse --verify HEAD)" docker compose -p "$project" -f docker-compose.loadtest.yml --profile generator run --build --rm loadtest --scenario {{.SCENARIO}} --profile {{.PROFILE}} --instance-label {{.INSTANCE_LABEL}} {{if .STAGE_DURATION}}--stage-duration {{.STAGE_DURATION}}{{end}} {{if .RATE}}--rate {{.RATE}}{{end}}
         '
 
   loadtest:suite:
-    desc: "Run the core smoke suite sequentially; use PROFILE=discover for capacity discovery"
+    desc: "Run the core scenarios sequentially; use PROFILE=discover for capacity discovery"
     vars:
       PROFILE: '{{.PROFILE | default "smoke"}}'
     cmds:
@@ -162,6 +162,24 @@ tasks:
         vars: { SCENARIO: core-mcp-http-search, PROFILE: '{{.PROFILE}}' }
       - task: loadtest:run
         vars: { SCENARIO: core-mcp-sse-active, PROFILE: '{{.PROFILE}}' }
+      - task: loadtest:run
+        vars: { SCENARIO: core-mcp-sse-idle, PROFILE: '{{.PROFILE}}' }
+      - task: loadtest:run
+        vars: { SCENARIO: core-mcp-http-fetch, PROFILE: '{{.PROFILE}}' }
+      - task: loadtest:run
+        vars: { SCENARIO: core-rest-fetch-static, PROFILE: '{{.PROFILE}}' }
+      - task: loadtest:run
+        vars: { SCENARIO: core-rest-fetch-javascript, PROFILE: '{{.PROFILE}}' }
+      - task: loadtest:run
+        vars: { SCENARIO: core-mixed, PROFILE: '{{.PROFILE}}' }
+
+  loadtest:diagnostics:
+    desc: "Run non-sizing payload sweep and controlled failures"
+    cmds:
+      - task: loadtest:run
+        vars: { SCENARIO: payload-sweep, PROFILE: smoke }
+      - task: loadtest:run
+        vars: { SCENARIO: controlled-failure, PROFILE: smoke }
 
   loadtest:compare:
     desc: "Compare generated report.json files without cloud pricing guesses"

@@ -1,1 +1,10 @@
-{"name":"core-mixed","kind":"rest-search","target":"gateway","start_rate":1,"payload":"medium","mode":"open"}
+name: core-mixed
+kind: mixed
+target: gateway
+start_rate: 1
+mode: open
+operations:
+  - {kind: rest-search, target: gateway, payload: small, weight: 40}
+  - {kind: mcp-http-search, target: gateway, payload: small, weight: 30}
+  - {kind: rest-fetch, target: gateway, payload: medium, weight: 25}
+  - {kind: rest-fetch, target: gateway, payload: medium, js_render: true, weight: 5}
