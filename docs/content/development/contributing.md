@@ -1,6 +1,6 @@
 ---
 title: "Contributing"
-weight: 60
+weight: 20
 ---
 
 Contributions are welcome. Useful areas include new search providers, crawler improvements, API ergonomics, deployment examples, observability, and documentation.
@@ -25,32 +25,42 @@ Read the full agreement in [`CLA.md`](https://github.com/coolapso/searchbase/blo
 
 ## Development
 
-Searchbase uses [Task](https://taskfile.dev/) to automate development and deployment tasks.
-User-facing Compose demos live in `examples/compose/`. Checkout-built
-development stacks and the isolated load-test stack live in `dev/compose/`.
-Run the tasks below from the repository root; the development stacks share
+Searchbase uses [Task](https://taskfile.dev/) to automate development tasks.
+Install Docker Engine with the Compose plugin and Task, then run the commands
+below from the repository root. User-facing demos live in `examples/compose/`
+and `examples/k8s/`; checkout-built stacks live in `dev/compose/` and share
 the `searchbase-dev` Compose project.
 
 ## Common Tasks
-
-You can run these tasks from the root directory.
 
 | Command | Description |
 | :--- | :--- |
 | `task dev:up` | Build and start the Lightpanda development stack. |
 | `task dev:upcrawl4ai` | Build and start the Crawl4AI development stack. |
 | `task dev:down` | Stop the active development stack. |
-| `task docs:hugo` | Run the documentation site locally. |
+| `task docs:hugo` | Preview the documentation site locally. |
+
+These tasks supply `--project-directory .` so Compose resolves build contexts
+from the repository root. Direct Compose commands need the same flag and a
+file under `dev/compose/`. The load-test stack in that directory uses a
+separate project; see [Load testing](/development/load-testing/).
 
 ## Service-Specific Tasks
 
-Each service has its own `Taskfile.yml` for more granular control. For example, in the `search-gateway` directory:
+Each service has its own `Taskfile.yml` for more granular control. For example,
+from the repository root:
 
-- `task test:gateway`: Run Go tests.
-- `task test:fmt`: Check code formatting.
-- `task fmt`: Format Go code.
-- `task docs:swagger`: Regenerate Swagger/OpenAPI documentation.
-- `task build`: Build the `search-gateway` binary locally.
+- `task test:gateway`: Run gateway Go tests.
+- `task lightpanda-worker:test`: Run Lightpanda wrapper tests.
+- `task lightpanda-worker:build`: Build the Lightpanda wrapper binary.
+- `task lightpanda-worker:container:build`: Build its local container image.
+
+The gateway Taskfile also provides `test:fmt`, `fmt`, `docs:swagger`, and
+`build` tasks. The Lightpanda Taskfile provides `container:build:all` for local
+amd64 and arm64 builds and `container:push` for authenticated GHCR publishing.
+The root `container:build`, `container:build:all`, and `container:push` tasks
+include the Lightpanda worker. The release workflow publishes versioned
+images from a semantic release tag.
 
 ## AI Disclosure & Contribution Policy
 

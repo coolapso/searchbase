@@ -15,8 +15,8 @@ services. Adapt the deployment to your environment before production use.
 
 The repository includes user-facing Compose examples under `examples/compose/`
 for quickly trying each backend. Kubernetes examples live under
-`examples/k8s/`. The checkout-built development and benchmark stacks live
-under `dev/compose/`; use those when working on Searchbase itself.
+`examples/k8s/`. To build from a checkout or run benchmarks, see
+[Development](/development/).
 
 {{< hint warning >}}
 The Docker Compose files are demonstration examples only. They are useful for local testing and learning how services connect, but they are not production deployment templates.
@@ -56,6 +56,8 @@ in cleaning and content from Crawl4AI.
 Lightpanda executes JavaScript for every fetch; both `js_render: false` and
 `js_render: true` have the same behavior. This is an alternative worker, not
 a new search provider and not an automatic replacement for existing deployments.
+See [Crawl4AI and Lightpanda](/docs/worker-comparison/) for saved load-test
+results, their rate-ceiling limits, and the reported Markdown completeness issue.
 
 The worker accepts `POST /extract` with `{"url":"https://example.org","js_render":false}`
 and returns `{"markdown":"...","success":true,"error":""}`. It also has
@@ -106,41 +108,8 @@ monitoring for total worker memory, including children. The image's
 `LIGHTPANDA_DISABLE_TELEMETRY=true` controls Lightpanda's separate upstream
 telemetry and remains set even when wrapper OpenTelemetry is enabled.
 
-From the repository root, the worker's Taskfile is available through the
-`lightpanda-worker:` namespace:
-
-```bash
-task lightpanda-worker:test
-task lightpanda-worker:build
-task lightpanda-worker:container:build
-task lightpanda-worker:container:build:all
-```
-
-These build and push tasks follow the same pattern as `search-gateway`.
-`container:build:all` builds for amd64 and arm64 without publishing.
-`task lightpanda-worker:container:push` requires GHCR authentication and
-publishes `latest` and the current Git-derived version to
-`ghcr.io/coolapso/searchbase/lightpanda-worker`. The root `container:build`,
-`container:build:all`, and `container:push` aggregates include Lightpanda.
-The manually dispatched release workflow follows the gateway's Docker
-metadata/build-push pattern, publishing `latest`, full-version, and major.minor
-tags from the semantic-release tag for both architectures.
-
-For development from a checkout, use the stacks under `dev/compose/`. They
-build local source and may start more services than a typical deployment:
-
-```bash
-task dev:up             # Lightpanda worker
-task dev:upcrawl4ai     # Crawl4AI worker
-task dev:down           # Stop the searchbase-dev project
-```
-
-The tasks run from the repository root and supply `--project-directory .` so
-Compose resolves build paths against the checkout. If invoking Compose
-directly, use the same option and a file under `dev/compose/`. The load-test
-stack in that directory has its own `searchbase-loadtest` project; see
-[Load testing](/docs/load-testing/). Neither development stack is a production
-deployment template.
+To build or test this worker from source, see
+[Contributing](/development/contributing/).
 
 ## Kubernetes
 

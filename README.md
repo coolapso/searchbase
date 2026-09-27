@@ -28,8 +28,8 @@ All documentation is available on the dedicated documentation site. Please visit
 - MCP Integration Guides (OpenWebUI, Claude, Cursor, Opencode, Neovim CodeCompanion)
 - REST API Reference
 - Configuration & Architecture
-- Self-Hosting Instructions
-- Deterministic load-test and capacity instructions
+- Self-hosting and fetch-worker comparison
+- Development, contribution, and isolated load-testing instructions
 - Contributing and CLA information
 
 ---
@@ -46,30 +46,28 @@ The Gateway will be available at `http://localhost:8080`.
 
 `examples/compose/` and `examples/k8s/` contain user-facing demos; the Kubernetes examples offer Crawl4AI or experimental Lightpanda as the fetch worker. `dev/compose/` contains checkout-built development and load-test stacks. These examples are not production deployment templates. See the [Documentation Site](https://docs.searchbase.md) for backend-specific examples and self-hosting notes.
 
-## Load-test smoke check
-
-The disposable load-test stack uses only local deterministic fixtures and is
-separate from development Compose services:
-
-```bash
-task loadtest:run
-```
-
-Reports are saved in timestamped directories named for the scenario, profile,
-and instance under `loadtest/results/`.
-
-For repeatable CPU/RAM sweeps and an SVG capacity graph, use
-`task loadtest:matrix -- --dry-run` to preview the matrix, then
-`task loadtest:matrix -- --cpus 2,3,4,6,8 --ram-gib 4,8,12,16`.
-
 An experimental Go-wrapped Lightpanda fetch worker is available through
 `examples/compose/docker-compose.lightpanda.yml`; the default worker remains
-Crawl4AI. Run `task lightpanda-worker:test` or
-`task lightpanda-worker:container:build` for its Taskfile workflow. See
-the [self-hosting documentation](https://docs.searchbase.md/docs/self-hosting/)
-for behavior, limits, the optional load-test backend, and its versioned release image.
+Crawl4AI. See the [self-hosting documentation](https://docs.searchbase.md/docs/self-hosting/)
+for deployment behavior and configuration.
 
-See the [load-testing documentation](https://docs.searchbase.md/docs/load-testing/) before running discovery or soak profiles.
+### Fetch worker comparison
+
+**Choose Lightpanda for speed after checking its output on your pages; keep
+Crawl4AI for the default cleaned Markdown and optional JavaScript.** In a
+saved local JavaScript fixture run (4 worker CPUs, 2 GiB limit), the gateway
+completed at least 15.46 fetches/s with Lightpanda at the test ceiling, versus 6.73
+fetches/s with Crawl4AI. This is a one-host result, not production capacity;
+the benchmark did not verify content completeness. See the
+[comparison](https://docs.searchbase.md/docs/worker-comparison/) and the
+[reported Lightpanda Markdown omission](https://github.com/lightpanda-io/browser/issues/3661).
+
+## Development
+
+The [development documentation](https://docs.searchbase.md/development/) covers
+checkout-built stacks, contributions, and isolated load testing. The load-test
+stack uses local deterministic fixtures and saves reports under
+`loadtest/results/`.
 
 ## ⚖️ License
 

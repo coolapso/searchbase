@@ -1,6 +1,6 @@
 ---
 title: "Load testing"
-weight: 65
+weight: 30
 ---
 
 # Load testing and capacity discovery
@@ -9,6 +9,11 @@ Searchbase includes a deterministic, disposable capacity suite. It measures the
 real `search-gateway`, `crawl-worker`, REST, and MCP paths without sending
 traffic to a search provider or arbitrary website. It is deliberately separate
 from the development Compose project.
+
+The [Crawl4AI and Lightpanda comparison](/docs/worker-comparison/) uses a
+frozen slice of two saved matrices. Its Lightpanda values are lower bounds
+because the scenario rate ceiling was reached; the fixture does not verify
+Markdown completeness.
 
 {{< hint warning >}}
 Run only one measured suite per host. The single-host setup is a functional

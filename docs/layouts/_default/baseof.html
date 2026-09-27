@@ -22,6 +22,7 @@
         <a href="/docs/getting-started/">Start</a>
         <a href="/docs/mcp-integration/">MCP</a>
         <a href="/docs/api-reference/">API</a>
+        <a href="/development/">Development</a>
         <a href="https://github.com/coolapso/searchbase">GitHub</a>
       </nav>
     </header>
@@ -32,7 +33,12 @@
           <div id="search-results" class="search-results" hidden></div>
         </div>
         <nav class="side-nav">
-          {{ range site.RegularPages.ByWeight }}
+          <p class="side-nav-heading">Use Searchbase</p>
+          {{ range (where site.RegularPages "Section" "docs").ByWeight }}
+            <a class="{{ if eq .RelPermalink $.RelPermalink }}active{{ end }}" href="{{ .RelPermalink }}">{{ .Title }}</a>
+          {{ end }}
+          <a class="side-nav-heading side-nav-section{{ if eq $.RelPermalink "/development/" }} active{{ end }}" href="/development/">Development</a>
+          {{ range (where site.RegularPages "Section" "development").ByWeight }}
             <a class="{{ if eq .RelPermalink $.RelPermalink }}active{{ end }}" href="{{ .RelPermalink }}">{{ .Title }}</a>
           {{ end }}
         </nav>

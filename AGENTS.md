@@ -56,7 +56,6 @@ Distributed tracing support for observability and debugging. Not fully tested ye
 #### OpenTelemetry Metrics
 Gateway metrics are planned but not implemented yet. The optional Lightpanda worker exports its own OTLP/HTTP metrics when explicitly enabled.
 
-
 ### D. Component 2: `crawl-worker` (Python)
 The internal heavy-lifter. Completely hidden from the outside world.
 *   **Role:** Headless browser, DOM cleaner, Markdown optimizer.
@@ -152,8 +151,10 @@ User-facing demonstration manifests live under `examples/k8s/` (no Helm/Kustomiz
 Set `LOADTEST_WORKER_CONTEXT=./lightpanda-worker` to run the same isolated fixture against Lightpanda without replacing the default worker. The matrix runner exposes this as `--worker-backend lightpanda` and labels outputs by backend. Direct worker-fetch load tests must treat JSON `success:false` as a failed operation even when HTTP status is 200.
 The matrix SVG and summary display the highest sampled worker working set in MiB below 1 GiB, explicitly label five-second sampling limits, and show runs that reach the scenario rate cap as neutral-colored lower bounds rather than measured capacity limits. Replotting saved matrix artifacts must never modify their raw `report.json` files.
 
+The Hugo Crawl4AI/Lightpanda comparison includes `docs/static/images/worker-comparison.svg`, an illustrative graph of the highest stable *achieved* gateway REST JavaScript fetch rates from saved local runs. At 4 worker CPUs/2 GiB, the gateway observed 6.73 successful fetches/s with Crawl4AI and at least 15.46 with Lightpanda; Lightpanda reached the 16/s scenario rate cap, so its maximum was not measured. Both older direct-worker matrices predate the `success:false` failure-counting fix: about 30 HTTP 2xx responses/s for Lightpanda are not verified successful extractions. Neither matrix verifies Markdown completeness or supports production sizing. Keep local load-test reports out of the repository and link users to the load-testing guide to reproduce results. The comparison links upstream Lightpanda issue #3661 about reported Markdown loss despite a complete rendered HTML dump; treat this as a content-quality risk to verify on representative pages.
+
 ### Documentation Site
-User-facing project documentation lives in the Hugo site under `docs/`. The site uses custom local layouts and styling, not an external theme. Keep it updated whenever setup, configuration, provider behavior, MCP usage, deployment notes, observability, or API behavior changes. Use `task docs:hugo` to preview locally and `hugo --destination /tmp/searchbase-docs-build` from `docs/` to verify builds without writing generated output into the repository.
+The Hugo site under `docs/` separates operating Searchbase from working on its source. `docs/content/docs/` holds user-facing setup, API, MCP, architecture, and self-hosting guidance. `docs/content/development/` holds contributor workflow and isolated load-testing guidance. The sidebar and home page expose both sections. Keep deployment examples under `examples/` and checkout-built stacks under `dev/`, and keep those boundaries clear in the site. The site uses custom local layouts and styling, not an external theme. Keep it updated whenever setup, configuration, provider behavior, MCP usage, deployment notes, observability, or API behavior changes. Use `task docs:hugo` to preview locally and `hugo --destination /tmp/searchbase-docs-build` from `docs/` to verify builds without writing generated output into the repository.
 
 ### Contributor License Agreement
 All external contributors must accept `CLA.md` before a pull request can be merged. `.github/workflows/cla.yaml` uses CLA Assistant Lite to require a signature comment and stores accepted signatures on the `cla-signatures` branch at `.github/cla/signatures/v1/cla.json`. Keep `CLA.md`, `CONTRIBUTING.md`, the PR template, the CLA workflow, and the docs Contributing page in sync if the contribution process changes.
