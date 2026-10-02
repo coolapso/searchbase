@@ -58,7 +58,7 @@ saved local JavaScript fixture run with the previous pinned nightly (4 worker
 CPUs, 2 GiB limit), the gateway
 completed at least 15.46 fetches/s with Lightpanda at the test ceiling, versus 6.73
 fetches/s with Crawl4AI. This is a one-host result, not production capacity;
-the `0.4.1` release has not been benchmarked here. Crawl4AI remains the
+the `1.0.0` release has not been benchmarked here. Crawl4AI remains the
 default and supports optional JavaScript through `js_render`; Lightpanda always
 runs JavaScript. See the
 [comparison](https://docs.searchbase.md/docs/worker-comparison/).

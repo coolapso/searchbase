@@ -22,7 +22,7 @@ At **4 worker CPUs and a 2 GiB worker limit**, fetching the same local
 JavaScript page:
 
 These saved results used the previous pinned nightly build. The current
-`0.4.1` release image has not been benchmarked here.
+`1.0.0` release image has not been benchmarked here.
 
 | Path | Crawl4AI | Lightpanda |
 | :--- | ---: | ---: |
