@@ -284,7 +284,9 @@ func main() {
 		slog.Error("invalid configuration", "error", err)
 		os.Exit(2)
 	}
-	waitMS, err := envInt("LIGHTPANDA_WORKER_WAIT_MS", 500, 0, 30000)
+	// --wait-ms caps page loading; it is not a delay after navigation. Match
+	// Lightpanda's default so a cold navigation can finish before Markdown is dumped.
+	waitMS, err := envInt("LIGHTPANDA_WORKER_WAIT_MS", 5000, 0, 30000)
 	if err != nil {
 		slog.Error("invalid configuration", "error", err)
 		os.Exit(2)

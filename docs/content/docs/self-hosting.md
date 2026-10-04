@@ -74,7 +74,16 @@ does not prevent requests to private or local network addresses; restrict
 worker network access separately if untrusted clients can request fetches.
 Set `LIGHTPANDA_WORKER_CONCURRENCY` (default `4`),
 `LIGHTPANDA_WORKER_TIMEOUT_SECONDS` (default `30`), and
-`LIGHTPANDA_WORKER_WAIT_MS` (default `500`) to tune it. Set
+`LIGHTPANDA_WORKER_WAIT_MS` (default `5000`) to tune it. This is the maximum
+page-loading wait in milliseconds, not a delay after navigation. Lightpanda
+normally returns earlier when the page load completes; if this budget expires,
+it dumps the page as it stands, which can be incomplete or empty. A value such
+as `500` can therefore make a first fetch fail while a faster repeat succeeds.
+The worker rejects empty Markdown. Increase this budget for slower pages;
+the worker's overall request timeout still bounds extraction, and the gateway
+REST fetch endpoint has its own 30-second timeout. Existing deployments that
+explicitly set `LIGHTPANDA_WORKER_WAIT_MS=500` must update that setting as well
+as rebuilding or updating the worker image. Set
 `LIGHTPANDA_WORKER_LOG_LEVEL` (`error` by default) for generic, URL-free
 request metadata logs. Its container disables
 Lightpanda's upstream telemetry and core dumps by default; retain those
