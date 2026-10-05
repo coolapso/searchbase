@@ -46,7 +46,7 @@ The internal heavy-lifter. Completely hidden from the outside world.
 #### Structured Logging
 Privacy-first structured logging designed to prevent user tracking and correlation.
 *   **Implementation:** Gin middleware at `internal/middlewares/ginslogger.go` using Go's standard `log/slog` package.
-*   **Configuration:** Environment variables `SEARCHBASE_LOG_LEVEL` (error/warn/info/debug) and `SEARCHBASE_LOG_FORMAT` (json/text).
+*   **Configuration:** `SEARCHBASE_LOG_LEVEL` (`error` by default; accepts error/warn/info/debug) sets the gateway logger threshold at startup. Request middleware emits ordinary requests at info and HTTP 5xx at error, so warn/error suppress ordinary request logs. Invalid levels fail startup. Output is JSON; `SEARCHBASE_LOG_FORMAT` is not currently implemented.
 *   **Privacy Guarantees:**
   - **No IP Logging:** Raw IP addresses are never logged; only regional data from edge proxies (e.g., Cloudflare's `CF-IPCountry` header).
   - **Minimal Context:** Only essential request metadata (method, path, status code, latency) is captured.

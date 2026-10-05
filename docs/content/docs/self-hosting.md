@@ -212,7 +212,7 @@ The `search-gateway` can be configured using the following environment variables
 | `SEARCHBASE_MOJEEK_API_KEY` | *(empty)* | Required when `SEARCHBASE_SEARCH_PROVIDER=mojeek`. Mojeek Search API key. |
 | `SEARCHBASE_ADDRESS` | *(empty)* | Optional. Used to override the base URL sent to MCP clients for SSE connections. **Reverse Proxy Note:** If deploying Searchbase behind a reverse proxy (like Traefik, Nginx, or Cloudflare Tunnels), leave this blank. The server will use relative paths, allowing the proxy to handle domain routing seamlessly. Set this only if you need to force a specific absolute URL. |
 | `SEARCHBASE_LOG_LEVEL` | `error` | Log level for structured logging (`debug`, `info`, `warn`, `error`). |
-| `SEARCHBASE_LOG_FORMAT` | `json` | Log format (`json` or `text`). |
+
 | `SEARCHBASE_MCP_HEARTBEAT_ENABLED` | `false` | Send periodic MCP heartbeat pings on the SSE and Streamable HTTP transports. Off unless explicitly set to `true`, so existing deployments keep the current behavior. Enable it when MCP clients drop idle connections, for example the reference MCP SSE client, which closes the stream after its default 300s read timeout. |
 | `SEARCHBASE_MCP_HEARTBEAT_INTERVAL` | `60` | Heartbeat interval in seconds. Only used when `SEARCHBASE_MCP_HEARTBEAT_ENABLED=true`. Minimum accepted value is `15`; a lower value fails startup instead of hammering the gateway and its host with excessively frequent pings. |
 | `SEARCHBASE_TRACING_ENABLED` | `false` | Enable OpenTelemetry distributed tracing. (Experimental) |
@@ -332,3 +332,15 @@ Before exposing Searchbase publicly, plan for:
 - resource limits and worker scaling.
 - structured logs and optional tracing.
 - provider rate limits and acceptable use.
+
+### Gateway logging
+
+Set `SEARCHBASE_LOG_LEVEL` on the gateway to `error` (the default), `warn`,
+`info`, or `debug`. The logger applies this threshold at startup. Ordinary
+requests, including health checks, are logged at `info`; HTTP 5xx requests
+are logged at `error`. With `warn` or `error`, ordinary request logs are
+suppressed and errors remain visible. Invalid levels fail startup.
+
+Output is JSON. `SEARCHBASE_LOG_FORMAT` is not currently supported.
+Versions through 1.3.3 hard-coded the logger to `info` despite parsing the
+configured level; rebuild or update the gateway to apply this fix.

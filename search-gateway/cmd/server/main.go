@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/coolapso/go-utils/slogger"
@@ -27,7 +28,7 @@ func main() {
 		log.Fatalf("initialization failed: %v\n", err)
 	}
 
-	logger, err := slogger.NewLogger("info", "json")
+	logger, err := newLogger(s)
 	if err != nil {
 		log.Fatalf("failed to create logger: %v\n", err)
 	}
@@ -77,4 +78,8 @@ func main() {
 	if err := r.Run(":" + s.Port()); err != nil && err != http.ErrServerClosed {
 		logger.Error("Server failed to start", "error", err)
 	}
+}
+
+func newLogger(s *settings.Settings) (*slog.Logger, error) {
+	return slogger.NewLogger(s.LogLevel(), "json")
 }
