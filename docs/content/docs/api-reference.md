@@ -71,7 +71,8 @@ You can also build your own scripts or use LangChain / LlamaIndex by hitting the
 ### Fetch errors
 
 Fetch failures retain the JSON shape `{"error":"not_found"}` and use these
-fixed categories and HTTP statuses:
+fixed categories and HTTP statuses. These mappings are also described in the
+generated Swagger UI at `/docs`:
 
 | Category | REST status | Meaning |
 | --- | --- | --- |

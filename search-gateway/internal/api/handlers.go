@@ -118,18 +118,19 @@ func (s *APIServer) HandleSearch(c *gin.Context) {
 // @Summary Get a website content
 // @ID fetchUrl
 // @Description Use this tool ONLY when you already have a specific, exact URL (http://...) that you want to extract and read. Do NOT pass search queries into this tool.
+// @Description Fetch failures return fixed URL-free categories in the error field. Detailed upstream classification requires the Lightpanda worker; unknown or legacy worker failures return extraction_failed.
 // @Tags fetchSingleUrl
 // @Accept json
 // @Produce json
 // @Param request body FetchRequest true "Fetch request payload"
 // @Success 200 {object} FetchResponse
-// @Failure 400 {object} ErrorResponse
-// @Failure 403 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 429 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Failure 502 {object} ErrorResponse
-// @Failure 504 {object} ErrorResponse
+// @Failure 400 {object} ErrorResponse "Invalid request format or missing required fields"
+// @Failure 403 {object} ErrorResponse "forbidden (upstream 401/403) or robots_denied"
+// @Failure 404 {object} ErrorResponse "not_found (upstream 404/410)"
+// @Failure 429 {object} ErrorResponse "rate_limited (upstream 429)"
+// @Failure 500 {object} ErrorResponse "extraction_failed (unclassified extraction failure)"
+// @Failure 502 {object} ErrorResponse "unreachable (DNS/connect failure or private-network blocking) or upstream_error"
+// @Failure 504 {object} ErrorResponse "timeout (upstream timeout or extraction deadline expired)"
 // @Router /api/v1/fetch [post]
 func (s *APIServer) HandleFetch(c *gin.Context) {
 	var req FetchRequest

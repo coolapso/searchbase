@@ -9,7 +9,7 @@
     "paths": {
         "/api/v1/fetch": {
             "post": {
-                "description": "Use this tool ONLY when you already have a specific, exact URL (http://...) that you want to extract and read. Do NOT pass search queries into this tool.",
+                "description": "Use this tool ONLY when you already have a specific, exact URL (http://...) that you want to extract and read. Do NOT pass search queries into this tool.\nFetch failures return fixed URL-free categories in the error field. Detailed upstream classification requires the Lightpanda worker; unknown or legacy worker failures return extraction_failed.",
                 "consumes": [
                     "application/json"
                 ],
@@ -40,43 +40,43 @@
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid request format or missing required fields",
                         "schema": {
                             "$ref": "#/definitions/api.ErrorResponse"
                         }
                     },
                     "403": {
-                        "description": "Forbidden",
+                        "description": "forbidden (upstream 401/403) or robots_denied",
                         "schema": {
                             "$ref": "#/definitions/api.ErrorResponse"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "not_found (upstream 404/410)",
                         "schema": {
                             "$ref": "#/definitions/api.ErrorResponse"
                         }
                     },
                     "429": {
-                        "description": "Too Many Requests",
+                        "description": "rate_limited (upstream 429)",
                         "schema": {
                             "$ref": "#/definitions/api.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "extraction_failed (unclassified extraction failure)",
                         "schema": {
                             "$ref": "#/definitions/api.ErrorResponse"
                         }
                     },
                     "502": {
-                        "description": "Bad Gateway",
+                        "description": "unreachable (DNS/connect failure or private-network blocking) or upstream_error",
                         "schema": {
                             "$ref": "#/definitions/api.ErrorResponse"
                         }
                     },
                     "504": {
-                        "description": "Gateway Timeout",
+                        "description": "timeout (upstream timeout or extraction deadline expired)",
                         "schema": {
                             "$ref": "#/definitions/api.ErrorResponse"
                         }
