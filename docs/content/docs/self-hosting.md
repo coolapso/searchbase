@@ -69,8 +69,12 @@ internal regression work.
 The worker accepts `POST /extract` with `{"url":"https://example.org","js_render":false}`
 and returns `{"markdown":"...","success":true,"error":""}`. It also has
 `GET /healthz`. Extraction failures return HTTP 200 with `success:false` and a
-generic error, matching the gateway's existing worker contract without exposing
-the fetched URL. Invalid targets return HTTP 400 before the browser starts:
+fixed error category, preserving the worker response shape without exposing
+the fetched URL. Categories include `not_found`, `forbidden`, `robots_denied`,
+`rate_limited`, `timeout`, `unreachable`, `upstream_error`, and
+`extraction_failed`. The wrapper parses the browser's `--json` output internally;
+it never forwards raw browser JSON, URLs, headers, or errors. See the
+[API reference](/docs/api-reference/#fetch-errors) for gateway status mappings. Invalid targets return HTTP 400 before the browser starts:
 the worker accepts absolute HTTP(S) URLs without credentials, whitespace,
 control characters, backslashes, or malformed ports. It normalizes the host
 and removes URL fragments before passing the URL to Lightpanda. This check

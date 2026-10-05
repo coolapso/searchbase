@@ -67,3 +67,26 @@ You can also build your own scripts or use LangChain / LlamaIndex by hitting the
   "markdown": "## Kubernetes 1.30\n\nThe new release features..."
 }
 ```
+
+### Fetch errors
+
+Fetch failures retain the JSON shape `{"error":"not_found"}` and use these
+fixed categories and HTTP statuses:
+
+| Category | REST status | Meaning |
+| --- | --- | --- |
+| `not_found` | 404 | Upstream returned 404 or 410. |
+| `forbidden` | 403 | Upstream returned 401 or 403. |
+| `robots_denied` | 403 | The page is disallowed by robots.txt. |
+| `rate_limited` | 429 | Upstream returned 429. |
+| `timeout` | 504 | Upstream timeout or extraction deadline expired. |
+| `unreachable` | 502 | DNS/connect failure; also private-network blocking in Lightpanda 1.0.0. |
+| `upstream_error` | 502 | Other upstream HTTP error. |
+| `extraction_failed` | 500 | Unclassified failure, invalid browser output, or empty/oversized Markdown. |
+
+Detailed upstream classification is available with the Lightpanda worker.
+Legacy Crawl4AI messages and unknown worker errors become `extraction_failed`.
+Malformed gateway requests still return 400. No raw upstream error, response
+body, or fetched URL is included in fetch failure responses. Successful fetch
+responses are unchanged. Clients that previously treated every extraction
+failure as HTTP 500 must now handle the statuses above.

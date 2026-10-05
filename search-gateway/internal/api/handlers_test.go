@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/coolapso/searchbase/search-gateway/internal/scraper"
@@ -197,5 +198,35 @@ func TestHandleFetchFailureDoesNotLogURL(t *testing.T) {
 
 	if bytes.Contains(logs.Bytes(), []byte(targetURL)) {
 		t.Fatalf("Fetch failure log leaked URL: %s", logs.String())
+	}
+}
+
+func TestFetchFailureCategories(t *testing.T) {
+	for _, tc := range []struct {
+		category string
+		status   int
+	}{{"not_found", 404}, {"robots_denied", 403}, {"rate_limited", 429}, {"timeout", 504}, {"unreachable", 502}, {"unknown https://private.example", 500}} {
+		worker := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			_ = json.NewEncoder(w).Encode(scraper.ExtractResponse{Error: tc.category})
+		}))
+		server := NewAPIServer(&MockSearchProvider{}, scraper.NewScraperClient(worker.URL), slog.Default())
+		router := gin.New()
+		router.POST("/fetch", server.HandleFetch)
+		response := httptest.NewRecorder()
+		request := httptest.NewRequest(http.MethodPost, "/fetch", strings.NewReader(`{"url":"https://private.example"}`))
+		request.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(response, request)
+		worker.Close()
+		if response.Code != tc.status || strings.Contains(response.Body.String(), "private.example") {
+			t.Fatalf("%s: %d %s", tc.category, response.Code, response.Body.String())
+		}
+		expected := tc.category
+		if tc.status == 500 {
+			expected = "extraction_failed"
+		}
+		var result ErrorResponse
+		if err := json.Unmarshal(response.Body.Bytes(), &result); err != nil || result.Error != expected {
+			t.Fatalf("unexpected response %s", response.Body.String())
+		}
 	}
 }

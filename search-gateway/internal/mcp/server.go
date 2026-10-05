@@ -147,7 +147,8 @@ func (s *MCPServer) HandleFetchURL(ctx context.Context, request mcp.CallToolRequ
 
 	markdown, err := s.scraperClient.Extract(ctx, targetURL, jsRender)
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("Failed to fetch URL: %v", err)), err
+		category, _ := scraper.FetchFailure(err)
+		return mcp.NewToolResultError("Failed to fetch URL: " + category), nil
 	}
 
 	resultText := fmt.Sprintf("## Content from %s\n\n%s", targetURL, markdown)

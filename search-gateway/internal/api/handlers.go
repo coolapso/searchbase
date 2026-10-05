@@ -124,7 +124,12 @@ func (s *APIServer) HandleSearch(c *gin.Context) {
 // @Param request body FetchRequest true "Fetch request payload"
 // @Success 200 {object} FetchResponse
 // @Failure 400 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 429 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
+// @Failure 502 {object} ErrorResponse
+// @Failure 504 {object} ErrorResponse
 // @Router /api/v1/fetch [post]
 func (s *APIServer) HandleFetch(c *gin.Context) {
 	var req FetchRequest
@@ -139,7 +144,8 @@ func (s *APIServer) HandleFetch(c *gin.Context) {
 	markdown, scrapeErr := s.ScraperClient.Extract(ctx, req.URL, req.JSRender)
 	if scrapeErr != nil {
 		s.logger.Error("failed to scrape URL")
-		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "failed to scrape URL"})
+		category, status := scraper.FetchFailure(scrapeErr)
+		c.JSON(status, ErrorResponse{Error: category})
 		return
 	}
 

@@ -75,7 +75,7 @@ func (f lightpandaFetcher) Fetch(ctx context.Context, target string) (string, er
 	if err != nil {
 		return "", err
 	}
-	args := []string{"fetch", "--dump", "markdown",
+	args := []string{"fetch", "--json", "--dump", "markdown",
 		"--strip-mode", "clutter", "--fail-on-http-error",
 		"--obey-robots", "--user-agent", userAgent,
 		"--wait-ms", strconv.Itoa(f.waitMS), "--log-level", "error"}
@@ -84,17 +84,74 @@ func (f lightpandaFetcher) Fetch(ctx context.Context, target string) (string, er
 	}
 	args = append(args, target)
 	command := exec.CommandContext(ctx, f.binary, args...)
-	output := &cappedBuffer{limit: maxMarkdownBytes}
+	// JSON escaping can expand each content byte to six bytes. Bound the envelope too.
+	output := &cappedBuffer{limit: 6*maxMarkdownBytes + (1 << 20)}
 	command.Stdout = output
 	command.Stderr = io.Discard
-	if err := command.Run(); err != nil {
-		return "", err
+	runErr := command.Run()
+	if ctx.Err() != nil {
+		return "", fetchFailure("timeout")
 	}
-	markdown := strings.TrimSpace(output.String())
-	if markdown == "" {
-		return "", errors.New("empty markdown")
+	return decodeBrowserResult(output.Bytes(), runErr)
+}
+
+type fetchFailure string
+
+func (e fetchFailure) Error() string { return string(e) }
+
+func decodeBrowserResult(data []byte, runErr error) (string, error) {
+	var result struct {
+		HTTPStatus int     `json:"http_status"`
+		Error      *string `json:"error"`
+		Content    string  `json:"content"`
+	}
+	if json.Unmarshal(data, &result) != nil {
+		return "", fetchFailure("extraction_failed")
+	}
+	if result.Error != nil {
+		switch *result.Error {
+		case "Timeout", "OperationTimedout":
+			return "", fetchFailure("timeout")
+		case "CouldntResolveHost", "CouldntResolveProxy", "CouldntConnect":
+			return "", fetchFailure("unreachable")
+		case "RobotsBlocked":
+			return "", fetchFailure("robots_denied")
+		default:
+			return "", fetchFailure("extraction_failed")
+		}
+	}
+	switch result.HTTPStatus {
+	case 404, 410:
+		return "", fetchFailure("not_found")
+	case 401, 403:
+		return "", fetchFailure("forbidden")
+	case 408, 504:
+		return "", fetchFailure("timeout")
+	case 429:
+		return "", fetchFailure("rate_limited")
+	}
+	if result.HTTPStatus >= 400 {
+		return "", fetchFailure("upstream_error")
+	}
+	if runErr != nil || result.HTTPStatus < 200 || result.HTTPStatus >= 300 {
+		return "", fetchFailure("extraction_failed")
+	}
+	markdown := strings.TrimSpace(result.Content)
+	if markdown == "" || len(markdown) > maxMarkdownBytes {
+		return "", fetchFailure("extraction_failed")
 	}
 	return markdown, nil
+}
+
+func failureCategory(err error) string {
+	var failure fetchFailure
+	if errors.As(err, &failure) {
+		return string(failure)
+	}
+	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+		return "timeout"
+	}
+	return "extraction_failed"
 }
 
 type server struct {
@@ -216,7 +273,7 @@ func (s *server) extract(w http.ResponseWriter, r *http.Request) {
 		defer func() { <-s.jobs }()
 	case <-ctx.Done():
 		outcome = "busy_or_timeout"
-		respond(w, status, extractResponse{Error: "worker busy or timed out"})
+		respond(w, status, extractResponse{Error: "timeout"})
 		return
 	}
 	browserCtx := ctx
@@ -235,9 +292,9 @@ func (s *server) extract(w http.ResponseWriter, r *http.Request) {
 	}
 	if err != nil {
 		outcome = "extraction_error"
-		// Preserve the old worker's success=false JSON contract, not its potentially
-		// sensitive upstream error text. The gateway must not log fetched URLs.
-		respond(w, status, extractResponse{Error: "extraction failed"})
+		// Preserve the success=false JSON shape, exposing only a fixed category.
+		// Never forward raw browser errors or the JSON envelope.
+		respond(w, status, extractResponse{Error: failureCategory(err)})
 		return
 	}
 	respond(w, status, extractResponse{Markdown: markdown, Success: true, Error: ""})

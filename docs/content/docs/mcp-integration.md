@@ -194,3 +194,12 @@ SEARCHBASE_MCP_HEARTBEAT_INTERVAL=60
 ```
 
 `SEARCHBASE_MCP_HEARTBEAT_INTERVAL` is expressed in seconds, defaults to `60`, and is only used when the heartbeat is enabled. The minimum accepted value is `15`; anything lower fails startup. Pick an interval comfortably below your client's read timeout. See [Self Hosting](/docs/self-hosting/) for the full configuration reference.
+
+### Fetch failures
+
+`fetch_url` returns an MCP tool result with `isError: true` and text such as
+`Failed to fetch URL: not_found`. The fixed categories match the
+[REST fetch errors](/docs/api-reference/#fetch-errors). Extraction failures are
+tool errors rather than MCP protocol errors, allowing the model to react to
+`timeout`, `robots_denied`, or `unreachable` without receiving raw browser
+errors or fetched URLs. Successful tool responses remain unchanged.

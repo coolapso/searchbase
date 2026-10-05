@@ -128,7 +128,7 @@ func TestExtractFailureIsPrivate(t *testing.T) {
 	if err := json.Unmarshal(response.Body.Bytes(), &result); err != nil {
 		t.Fatal(err)
 	}
-	if result.Success || result.Markdown != "" || result.Error != "extraction failed" {
+	if result.Success || result.Markdown != "" || result.Error != "extraction_failed" {
 		t.Fatalf("unexpected failure response: %+v", result)
 	}
 }
@@ -153,7 +153,7 @@ func TestOutputLimit(t *testing.T) {
 
 func TestLightpandaProcessUsesMarkdownWithClutter(t *testing.T) {
 	binary := filepath.Join(t.TempDir(), "fake-lightpanda")
-	script := "#!/bin/sh\nprintf '%s' \"$*\"\n"
+	script := "#!/bin/sh\nprintf '{\"http_status\":200,\"error\":null,\"content\":\"%s\"}' \"$*\"\n"
 	if err := os.WriteFile(binary, []byte(script), 0700); err != nil {
 		t.Fatal(err)
 	}
@@ -186,12 +186,49 @@ func TestUserAgentValidation(t *testing.T) {
 
 func TestLightpandaPrivateNetworkOverrideAndIdentity(t *testing.T) {
 	binary := filepath.Join(t.TempDir(), "fake-lightpanda")
-	if err := os.WriteFile(binary, []byte("#!/bin/sh\nprintf '%s' \"$*\"\n"), 0700); err != nil {
+	if err := os.WriteFile(binary, []byte("#!/bin/sh\nprintf '{\"http_status\":200,\"error\":null,\"content\":\"%s\"}' \"$*\"\n"), 0700); err != nil {
 		t.Fatal(err)
 	}
 	identity := "PersonalBot (+https://example.org/bot)"
 	output, err := (lightpandaFetcher{binary: binary, userAgent: identity, allowPrivateNetworks: true}).Fetch(context.Background(), "http://127.0.0.1/")
 	if err != nil || strings.Contains(output, "--block-private-networks") || !strings.Contains(output, "--user-agent "+identity) || !strings.Contains(output, "--obey-robots") {
 		t.Fatalf("unexpected args %q: %v", output, err)
+	}
+}
+
+func TestBrowserResultCategories(t *testing.T) {
+	for _, tc := range []struct{ body, category string }{
+		{`{"http_status":404,"content":"secret error page"}`, "not_found"},
+		{`{"http_status":403}`, "forbidden"}, {`{"http_status":429}`, "rate_limited"},
+		{`{"http_status":503}`, "upstream_error"}, {`{"http_status":504}`, "timeout"},
+		{`{"error":"OperationTimedout"}`, "timeout"}, {`{"error":"CouldntResolveHost"}`, "unreachable"},
+		{`{"error":"CouldntConnect"}`, "unreachable"}, {`{"error":"RobotsBlocked"}`, "robots_denied"},
+		{`{"error":"unknown https://private.example"}`, "extraction_failed"},
+		{`{"http_status":200,"content":""}`, "extraction_failed"}, {`not JSON`, "extraction_failed"},
+	} {
+		content, err := decodeBrowserResult([]byte(tc.body), errors.New("process failed"))
+		if err == nil || content != "" || failureCategory(err) != tc.category {
+			t.Fatalf("%s: content %q, error %v", tc.category, content, err)
+		}
+	}
+	content, err := decodeBrowserResult([]byte(`{"http_status":200,"error":null,"content":"# Article","url":"secret","headers":{"secret":"value"}}`), nil)
+	if err != nil || content != "# Article" {
+		t.Fatalf("success: %q %v", content, err)
+	}
+	if _, err := decodeBrowserResult([]byte(`{"http_status":200,"content":"partial"}`), errors.New("killed")); failureCategory(err) != "extraction_failed" {
+		t.Fatal("accepted failed process")
+	}
+}
+
+func TestBrowserDeadlineCategory(t *testing.T) {
+	binary := filepath.Join(t.TempDir(), "fake-lightpanda")
+	if err := os.WriteFile(binary, []byte("#!/bin/sh\nexec sleep 10\n"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
+	defer cancel()
+	content, err := (lightpandaFetcher{binary: binary}).Fetch(ctx, "https://example.org")
+	if content != "" || err == nil || failureCategory(err) != "timeout" {
+		t.Fatalf("deadline: %q %v", content, err)
 	}
 }

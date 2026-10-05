@@ -95,7 +95,7 @@ func (c *ScraperClient) Extract(ctx context.Context, url string, jsRender bool) 
 	}
 
 	if !extractResp.Success {
-		err := fmt.Errorf("scraper failed internally: %s", extractResp.Error)
+		err := safeWorkerError(extractResp.Error)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "scraper failed internally")
 		return "", err

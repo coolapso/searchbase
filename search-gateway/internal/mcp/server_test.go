@@ -161,3 +161,26 @@ func TestHandleFetchURL(t *testing.T) {
 		t.Errorf("Expected markdown in response, got %s", textContent)
 	}
 }
+
+func TestFetchToolFailureCategories(t *testing.T) {
+	for _, category := range []string{"not_found", "robots_denied", "timeout", "failed https://private.example"} {
+		worker := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			_ = json.NewEncoder(w).Encode(scraper.ExtractResponse{Error: category})
+		}))
+		server := NewServer(&MockSearchProvider{}, scraper.NewScraperClient(worker.URL), slog.Default())
+		request := mcp.CallToolRequest{Params: mcp.CallToolParams{Name: "fetch_url", Arguments: map[string]any{"url": "https://private.example"}}}
+		result, err := server.HandleFetchURL(context.Background(), request)
+		worker.Close()
+		if err != nil || !result.IsError {
+			t.Fatalf("expected tool error, got %v %v", result, err)
+		}
+		text := result.Content[0].(mcp.TextContent).Text
+		expected := category
+		if strings.Contains(category, "private.example") {
+			expected = "extraction_failed"
+		}
+		if text != "Failed to fetch URL: "+expected {
+			t.Fatalf("unsafe or unexpected tool error %q", text)
+		}
+	}
+}
