@@ -76,6 +76,8 @@ control characters, backslashes, or malformed ports. It normalizes the host
 and removes URL fragments before passing the URL to Lightpanda. This check
 does not prevent requests to private or local network addresses; restrict
 worker network access separately if untrusted clients can request fetches.
+Every fetch passes `--obey-robots`; pages denied by `robots.txt` fail extraction.
+
 Set `LIGHTPANDA_WORKER_USER_AGENT` on the worker
 to identify your deployment. Its default is
 `Searchbase (+https://github.com/coolapso/searchbase)`. For example:

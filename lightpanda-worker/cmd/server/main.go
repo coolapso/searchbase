@@ -76,7 +76,7 @@ func (f lightpandaFetcher) Fetch(ctx context.Context, target string) (string, er
 	}
 	args := []string{"fetch", "--dump", "markdown",
 		"--strip-mode", "clutter", "--fail-on-http-error",
-		"--user-agent", userAgent,
+		"--obey-robots", "--user-agent", userAgent,
 		"--wait-ms", strconv.Itoa(f.waitMS), "--log-level", "error"}
 	args = append(args, target)
 	command := exec.CommandContext(ctx, f.binary, args...)

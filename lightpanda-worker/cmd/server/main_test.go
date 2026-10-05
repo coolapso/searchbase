@@ -162,6 +162,7 @@ func TestLightpandaProcessUsesMarkdownWithClutter(t *testing.T) {
 		!strings.Contains(markdown, "--strip-mode clutter") ||
 		!strings.Contains(markdown, "--fail-on-http-error") ||
 		!strings.Contains(markdown, "--user-agent "+defaultUserAgent) ||
+		!strings.Contains(markdown, "--obey-robots") ||
 		!strings.Contains(markdown, "https://example.org/path") ||
 		strings.Contains(markdown, "private-fragment") {
 		t.Fatalf("markdown = %q, error = %v", markdown, err)
