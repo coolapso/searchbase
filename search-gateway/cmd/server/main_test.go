@@ -27,7 +27,11 @@ func TestConfiguredLoggerFiltersRequests(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			defer output.Close()
+			t.Cleanup(func() {
+				if err := output.Close(); err != nil {
+					t.Errorf("close log output: %v", err)
+				}
+			})
 			previous := os.Stdout
 			os.Stdout = output
 			logger, err := newLogger(s)
