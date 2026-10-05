@@ -161,8 +161,23 @@ func TestLightpandaProcessUsesMarkdownWithClutter(t *testing.T) {
 	if err != nil || !strings.Contains(markdown, "--dump markdown") ||
 		!strings.Contains(markdown, "--strip-mode clutter") ||
 		!strings.Contains(markdown, "--fail-on-http-error") ||
+		!strings.Contains(markdown, "--user-agent "+defaultUserAgent) ||
 		!strings.Contains(markdown, "https://example.org/path") ||
 		strings.Contains(markdown, "private-fragment") {
 		t.Fatalf("markdown = %q, error = %v", markdown, err)
+	}
+}
+
+func TestUserAgentValidation(t *testing.T) {
+	for _, value := range []string{"", "SearchbaseCloud (+https://searchbase.md)", "PersonalBot (+https://example.org/bot)"} {
+		got, err := validateUserAgent(value)
+		if err != nil || got == "" {
+			t.Fatalf("valid identity rejected: %q", value)
+		}
+	}
+	for _, value := range []string{" ", "Bot\r\nInjected: value", "Mozilla/5.0", "mozilla/5.0", strings.Repeat("x", 1025)} {
+		if _, err := validateUserAgent(value); err == nil {
+			t.Fatal("invalid identity accepted")
+		}
 	}
 }

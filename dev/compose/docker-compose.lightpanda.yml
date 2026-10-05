@@ -30,6 +30,8 @@ services:
     build:
       context: ./lightpanda-worker
       dockerfile: Containerfile
+    environment:
+      LIGHTPANDA_WORKER_USER_AGENT: ${LIGHTPANDA_WORKER_USER_AGENT:-Searchbase (+https://github.com/coolapso/searchbase)}
     ports:
       - "8000:8000"
 

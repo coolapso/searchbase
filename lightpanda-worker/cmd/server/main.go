@@ -25,6 +25,8 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+const defaultUserAgent = "Searchbase (+https://github.com/coolapso/searchbase)"
+
 const maxRequestBytes = 32 << 10
 const maxMarkdownBytes = 8 << 20
 
@@ -56,8 +58,9 @@ func (b *cappedBuffer) Write(p []byte) (int, error) {
 }
 
 type lightpandaFetcher struct {
-	binary string
-	waitMS int
+	binary    string
+	waitMS    int
+	userAgent string
 }
 
 func (f lightpandaFetcher) Fetch(ctx context.Context, target string) (string, error) {
@@ -67,9 +70,16 @@ func (f lightpandaFetcher) Fetch(ctx context.Context, target string) (string, er
 	}
 	// Lightpanda's fetch command runs its JS-capable browser and dumps its own Markdown.
 	// Never include stderr in API responses: upstream errors can contain the target URL.
-	command := exec.CommandContext(ctx, f.binary, "fetch", "--dump", "markdown",
+	userAgent, err := validateUserAgent(f.userAgent)
+	if err != nil {
+		return "", err
+	}
+	args := []string{"fetch", "--dump", "markdown",
 		"--strip-mode", "clutter", "--fail-on-http-error",
-		"--wait-ms", strconv.Itoa(f.waitMS), "--log-level", "error", target)
+		"--user-agent", userAgent,
+		"--wait-ms", strconv.Itoa(f.waitMS), "--log-level", "error"}
+	args = append(args, target)
+	command := exec.CommandContext(ctx, f.binary, args...)
 	output := &cappedBuffer{limit: maxMarkdownBytes}
 	command.Stdout = output
 	command.Stderr = io.Discard
@@ -241,6 +251,21 @@ func envInt(name string, fallback, minimum, maximum int) (int, error) {
 	return n, nil
 }
 
+func validateUserAgent(value string) (string, error) {
+	if value == "" {
+		return defaultUserAgent, nil
+	}
+	if strings.TrimSpace(value) == "" || len(value) > 1024 || strings.Contains(strings.ToLower(value), "mozilla") {
+		return "", errors.New("invalid LIGHTPANDA_WORKER_USER_AGENT: use a bot identity of at most 1024 bytes without Mozilla")
+	}
+	for _, r := range value {
+		if unicode.IsControl(r) {
+			return "", errors.New("invalid LIGHTPANDA_WORKER_USER_AGENT: control characters are forbidden")
+		}
+	}
+	return value, nil
+}
+
 func main() {
 	logLevel := new(slog.LevelVar)
 	logLevel.Set(slog.LevelError)
@@ -291,6 +316,11 @@ func main() {
 		slog.Error("invalid configuration", "error", err)
 		os.Exit(2)
 	}
+	userAgent, err := validateUserAgent(os.Getenv("LIGHTPANDA_WORKER_USER_AGENT"))
+	if err != nil {
+		slog.Error("invalid configuration", "error", err)
+		os.Exit(2)
+	}
 	var telemetry *workerTelemetry
 	if enabled := os.Getenv("LIGHTPANDA_WORKER_OTEL_ENABLED"); enabled != "" {
 		useOTel, err := strconv.ParseBool(enabled)
@@ -313,7 +343,7 @@ func main() {
 			}()
 		}
 	}
-	handler := (&server{fetcher: lightpandaFetcher{binary: "/bin/lightpanda", waitMS: waitMS},
+	handler := (&server{fetcher: lightpandaFetcher{binary: "/bin/lightpanda", waitMS: waitMS, userAgent: userAgent},
 		jobs: make(chan struct{}, concurrency), timeout: time.Duration(timeoutSeconds) * time.Second,
 		telemetry: telemetry}).routes()
 	httpServer := &http.Server{Addr: fmt.Sprintf(":%d", port), Handler: handler,
