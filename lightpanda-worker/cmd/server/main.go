@@ -68,7 +68,7 @@ func (f lightpandaFetcher) Fetch(ctx context.Context, target string) (string, er
 	// Lightpanda's fetch command runs its JS-capable browser and dumps its own Markdown.
 	// Never include stderr in API responses: upstream errors can contain the target URL.
 	command := exec.CommandContext(ctx, f.binary, "fetch", "--dump", "markdown",
-		"--fail-on-http-error",
+		"--strip-mode", "clutter", "--fail-on-http-error",
 		"--wait-ms", strconv.Itoa(f.waitMS), "--log-level", "error", target)
 	output := &cappedBuffer{limit: maxMarkdownBytes}
 	command.Stdout = output

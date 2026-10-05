@@ -53,7 +53,11 @@ pin the published `lightpanda-worker` image by version or digest. Lightpanda is
 AGPL-3.0 licensed; review
 its terms before redistribution or deployment. The Go worker uses Lightpanda's
 native Markdown dump with its `clutter` stripping heuristic, which may differ
-in cleaning and content from Crawl4AI.
+in cleaning and content from Crawl4AI. The worker passes `--strip-mode clutter`;
+1.0.0 includes [upstream fix #3663](https://github.com/lightpanda-io/browser/pull/3663)
+so anchors without `href` no longer cause content to be discarded as link-heavy
+navigation or produce empty Markdown links. Navigation and footers can still be
+removed intentionally.
 Lightpanda executes JavaScript for every fetch; both `js_render: false` and
 `js_render: true` have the same behavior. This is an alternative worker, not
 a new search provider and not an automatic replacement for existing deployments.
