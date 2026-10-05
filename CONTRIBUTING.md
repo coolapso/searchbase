@@ -23,6 +23,10 @@ Accepted signatures are stored in the repository on the `cla-signatures` branch 
 
 If your change affects setup, configuration, provider behavior, API behavior, MCP usage, deployment, observability, or user-facing behavior, update the Hugo documentation site under `docs/`.
 
+## Swagger checks for API changes
+
+For every API-related change, always review Swagger/OpenAPI for affected endpoints, request/response schemas, status codes, and error descriptions, including worker or MCP changes that affect REST behavior. Update the Go Swagger annotations, run `task search-gateway:docs:swagger` and `task search-gateway:test:lint:swagger` from the repository root, and review all three generated files (`search-gateway/docs/docs.go`, `swagger.json`, and `swagger.yaml`). Include any generated changes in the same commit as the API change. Regeneration alone is not enough: verify the descriptions match runtime behavior.
+
 Run this before submitting documentation changes:
 
 ```bash

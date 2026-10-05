@@ -45,6 +45,10 @@ from the repository root. Direct Compose commands need the same flag and a
 file under `dev/compose/`. The load-test stack in that directory uses a
 separate project; see [Load testing](/development/load-testing/).
 
+## Swagger checks for API changes
+
+For every API-related change, always review Swagger/OpenAPI for affected endpoints, request/response schemas, status codes, and error descriptions, including worker or MCP changes that affect REST behavior. Update the Go Swagger annotations, run `task search-gateway:docs:swagger` and `task search-gateway:test:lint:swagger` from the repository root, and review all three generated files (`search-gateway/docs/docs.go`, `swagger.json`, and `swagger.yaml`). Include any generated changes in the same commit as the API change. Regeneration alone is not enough: verify the descriptions match runtime behavior.
+
 ## Service-Specific Tasks
 
 Each service has its own `Taskfile.yml` for more granular control. For example,

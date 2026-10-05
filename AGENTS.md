@@ -3,6 +3,8 @@
 **⚠️ CORE MANDATE FOR AI AGENTS:** 
 This file (`AGENTS.md`) is the single source of truth for the project's architecture, design decisions, and data contracts. **It must always be updated** whenever relevant architectural changes, new endpoints, or structural modifications are made during the development process. Additionally, you must **always update the Hugo documentation site under `docs/`** with relevant user-facing information (setup instructions, provider behavior, MCP client setup, configuration, deployment notes, API behavior, observability, etc.) and keep `README.md` as the concise repository landing page. Always consult this file to understand the system context.
 
+**API documentation mandate:** For every API-related change, always review Swagger/OpenAPI for affected endpoints, request/response schemas, status codes, and error descriptions, including worker or MCP changes that affect REST behavior. Update the Go Swagger annotations, run `task search-gateway:docs:swagger` and `task search-gateway:test:lint:swagger` from the repository root, and review all three generated files (`search-gateway/docs/docs.go`, `swagger.json`, and `swagger.yaml`). Include any generated changes in the same commit as the API change. Regeneration alone is not enough: verify the descriptions match runtime behavior.
+
 ## 1. Project Overview
 A self-hosted, highly efficient, privacy-focused Search Engine designed explicitly for AI Agents and LLMs. It bypasses the need for paid search APIs (like Tavily or Bing) and avoids the rate-limiting and formatting issues of standard SearXNG instances.
 
