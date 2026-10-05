@@ -292,3 +292,7 @@ or any price. Treat it as a candidate for a later real multi-replica test,
 not a recommendation to scale horizontally. On this co-located setup, the
 generator and observers also contend with the services; repeat promising
 configurations with a separate generator VM before making hosting decisions.
+
+The isolated benchmark stack sets `LIGHTPANDA_WORKER_ALLOW_PRIVATE_NETWORKS=true`
+so Lightpanda can reach its private fixture service. Normal worker deployments
+block private networks by default. Robots compliance remains enabled in tests.

@@ -161,8 +161,9 @@ func TestLightpandaProcessUsesMarkdownWithClutter(t *testing.T) {
 	if err != nil || !strings.Contains(markdown, "--dump markdown") ||
 		!strings.Contains(markdown, "--strip-mode clutter") ||
 		!strings.Contains(markdown, "--fail-on-http-error") ||
-		!strings.Contains(markdown, "--user-agent "+defaultUserAgent) ||
 		!strings.Contains(markdown, "--obey-robots") ||
+		!strings.Contains(markdown, "--block-private-networks") ||
+		!strings.Contains(markdown, "--user-agent "+defaultUserAgent) ||
 		!strings.Contains(markdown, "https://example.org/path") ||
 		strings.Contains(markdown, "private-fragment") {
 		t.Fatalf("markdown = %q, error = %v", markdown, err)
@@ -180,5 +181,17 @@ func TestUserAgentValidation(t *testing.T) {
 		if _, err := validateUserAgent(value); err == nil {
 			t.Fatal("invalid identity accepted")
 		}
+	}
+}
+
+func TestLightpandaPrivateNetworkOverrideAndIdentity(t *testing.T) {
+	binary := filepath.Join(t.TempDir(), "fake-lightpanda")
+	if err := os.WriteFile(binary, []byte("#!/bin/sh\nprintf '%s' \"$*\"\n"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	identity := "PersonalBot (+https://example.org/bot)"
+	output, err := (lightpandaFetcher{binary: binary, userAgent: identity, allowPrivateNetworks: true}).Fetch(context.Background(), "http://127.0.0.1/")
+	if err != nil || strings.Contains(output, "--block-private-networks") || !strings.Contains(output, "--user-agent "+identity) || !strings.Contains(output, "--obey-robots") {
+		t.Fatalf("unexpected args %q: %v", output, err)
 	}
 }

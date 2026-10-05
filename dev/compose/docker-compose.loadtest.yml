@@ -18,6 +18,8 @@ services:
       context: ${LOADTEST_WORKER_CONTEXT:-./crawl-worker}
       dockerfile: Containerfile
     environment:
+      # Trusted isolated fixtures use private addresses; ignored by Crawl4AI.
+      LIGHTPANDA_WORKER_ALLOW_PRIVATE_NETWORKS: "true"
       CRAWLER_LOG_LEVEL: error
       CRAWLER_LOG_FORMAT: json
     networks: [benchmark]

@@ -19,6 +19,7 @@ services:
       dockerfile: Containerfile
     environment:
       LIGHTPANDA_WORKER_USER_AGENT: ${LIGHTPANDA_WORKER_USER_AGENT:-Searchbase (+https://github.com/coolapso/searchbase)}
+      LIGHTPANDA_WORKER_ALLOW_PRIVATE_NETWORKS: ${LIGHTPANDA_WORKER_ALLOW_PRIVATE_NETWORKS:-false}
       LIGHTPANDA_WORKER_CONCURRENCY: "4"
       LIGHTPANDA_WORKER_TIMEOUT_SECONDS: "30"
       LIGHTPANDA_WORKER_WAIT_MS: "5000"

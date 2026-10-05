@@ -58,9 +58,10 @@ func (b *cappedBuffer) Write(p []byte) (int, error) {
 }
 
 type lightpandaFetcher struct {
-	binary    string
-	waitMS    int
-	userAgent string
+	binary               string
+	waitMS               int
+	userAgent            string
+	allowPrivateNetworks bool
 }
 
 func (f lightpandaFetcher) Fetch(ctx context.Context, target string) (string, error) {
@@ -78,6 +79,9 @@ func (f lightpandaFetcher) Fetch(ctx context.Context, target string) (string, er
 		"--strip-mode", "clutter", "--fail-on-http-error",
 		"--obey-robots", "--user-agent", userAgent,
 		"--wait-ms", strconv.Itoa(f.waitMS), "--log-level", "error"}
+	if !f.allowPrivateNetworks {
+		args = append(args, "--block-private-networks")
+	}
 	args = append(args, target)
 	command := exec.CommandContext(ctx, f.binary, args...)
 	output := &cappedBuffer{limit: maxMarkdownBytes}
@@ -321,6 +325,14 @@ func main() {
 		slog.Error("invalid configuration", "error", err)
 		os.Exit(2)
 	}
+	allowPrivateNetworks := false
+	if value := os.Getenv("LIGHTPANDA_WORKER_ALLOW_PRIVATE_NETWORKS"); value != "" {
+		allowPrivateNetworks, err = strconv.ParseBool(value)
+		if err != nil {
+			slog.Error("LIGHTPANDA_WORKER_ALLOW_PRIVATE_NETWORKS must be true or false")
+			os.Exit(2)
+		}
+	}
 	var telemetry *workerTelemetry
 	if enabled := os.Getenv("LIGHTPANDA_WORKER_OTEL_ENABLED"); enabled != "" {
 		useOTel, err := strconv.ParseBool(enabled)
@@ -343,7 +355,7 @@ func main() {
 			}()
 		}
 	}
-	handler := (&server{fetcher: lightpandaFetcher{binary: "/bin/lightpanda", waitMS: waitMS, userAgent: userAgent},
+	handler := (&server{fetcher: lightpandaFetcher{binary: "/bin/lightpanda", waitMS: waitMS, userAgent: userAgent, allowPrivateNetworks: allowPrivateNetworks},
 		jobs: make(chan struct{}, concurrency), timeout: time.Duration(timeoutSeconds) * time.Second,
 		telemetry: telemetry}).routes()
 	httpServer := &http.Server{Addr: fmt.Sprintf(":%d", port), Handler: handler,

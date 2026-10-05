@@ -32,6 +32,7 @@ services:
       dockerfile: Containerfile
     environment:
       LIGHTPANDA_WORKER_USER_AGENT: ${LIGHTPANDA_WORKER_USER_AGENT:-Searchbase (+https://github.com/coolapso/searchbase)}
+      LIGHTPANDA_WORKER_ALLOW_PRIVATE_NETWORKS: ${LIGHTPANDA_WORKER_ALLOW_PRIVATE_NETWORKS:-false}
     ports:
       - "8000:8000"
 
