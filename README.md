@@ -3,9 +3,9 @@
   <h1>Searchbase</h1>
 </div>
 
-**SEARCHBASE** is a self-hosted, highly efficient, privacy-focused Search Engine designed explicitly for **AI Agents and LLMs**. 
+**SEARCHBASE** is an open-source, self-hostable, privacy-focused **web search API for AI agents**. It returns compact search results (title, URL, and snippet) through REST and the **Model Context Protocol (MCP)**, and can fetch a single page as Markdown when your agent needs to read it.
 
-It natively supports the **Model Context Protocol (MCP)**, making it a plug-and-play web search tool for LLM UIs like Claude Desktop, Cursor, OpenWebUI, Opencode, and Neovim CodeCompanion.
+It is provider-flexible: you choose the search provider, independently of your model. Searchbase works alongside frontier and local models rather than replacing them, so your model provider does not also control your agent's way into the web. MCP support makes it a plug-and-play search tool for clients like Claude Desktop, Cursor, OpenWebUI, Opencode, and Neovim CodeCompanion.
 
 ---
 
@@ -15,7 +15,7 @@ In an era where Big AI companies profit from your data and gatekeep intelligence
 
 **Searchbase is built to break this cycle.**
 
-Searchbase mission is to provide a sovereign, privacy-first search layer that enables any LLM, regardless of size, to access the live web with maximum efficiency and zero dependency on corporate gatekeepers. Searchbase turns the web into a clean, token-optimized stream of knowledge, ready for your context window.
+Searchbase mission is to provide a sovereign, privacy-first search layer that enables any LLM, regardless of size, to access the live web with zero dependency on corporate gatekeepers. Searchbase is built for independence and privacy, not for the lowest token count: it aims to return compact, readable results, but token use depends on the client, the model, and the pages involved.
 
 This repository is my independent open-source project. It will remain separate from any managed cloud service I may build around it.
 

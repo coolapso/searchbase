@@ -4,9 +4,9 @@ type: "docs"
 ---
 # Searchbase
 
-**SEARCHBASE** is a self-hosted, highly efficient, privacy-focused Search Engine designed explicitly for **AI Agents and LLMs**. 
+**SEARCHBASE** is an open-source, self-hostable, privacy-focused **web search API for AI agents**. It returns compact search results (title, URL, and snippet) through REST and the **Model Context Protocol (MCP)**, and can fetch a single page as Markdown when your agent needs to read it.
 
-It natively supports the **Model Context Protocol (MCP)**, making it a plug-and-play web search tool for LLM UIs like Claude Desktop, Cursor, and OpenWebUI.
+It is provider-flexible: you choose the search provider, independently of your model. Searchbase works alongside frontier and local models rather than replacing them, so your model provider does not also control your agent's way into the web. MCP support makes it a plug-and-play search tool for clients like Claude Desktop, Cursor, OpenWebUI, Opencode, and Neovim CodeCompanion.
 
 ## 🎯 The Mission
 
@@ -15,19 +15,24 @@ In an era where Big AI companies profit from your data and gatekeep intelligence
 **The status quo is built on dependency:**
 * **Expensive Gatekeepers:** Services like Tavily, Bing, and Google Search API force developers into tiered subscription models, creating a "pay-to-play" barrier for innovation.
 * **Privacy Erosion:** Using proprietary middleware means your agents' research paths—and the data they uncover—are being fed into corporate training loops.
-* **Inefficient Proxies:** Standard wrappers (like SearXNG) struggle with high-frequency, high-concurrency demands—frequently hitting rate limits and Captchas—while delivering unoptimized, token-heavy content that bloats LLM context windows.
+* **Coupled Stacks:** When the model provider also runs the web tools, your choice of model decides how your agents see the web.
 
 **Searchbase is built to break this cycle.** 
 
-Searchbase mission is to provide a sovereign, privacy-first search layer that enables any LLM—regardless of size—to access the live web with maximum efficiency and zero dependency on corporate gatekeepers. Searchbase turns the web into a clean, token-optimized stream of knowledge, ready for your context window.
+Searchbase mission is to provide a sovereign, privacy-first search layer that enables any LLM—regardless of size—to access the live web with zero dependency on corporate gatekeepers.
 
 This repository is my independent open-source project. It will remain separate from any managed cloud service I may build around it.
 
 **The Searchbase Way:**
-* **Economic Sovereignty:** Bypass paid API keys entirely using lightweight, intelligent scraping.
-* **Token Optimization:** searchbase desn't just fetch web pages; it distills them. By stripping boilerplate and ads, it returns pristine Markdown designed specifically to minimize token usage and maximize LLM reasoning.
-* **Native Integration:** With out-of-the-box **MCP** support, your AI tools gain "eyes" on the web with zero glue-code.
-* **Architectural Transparency:** A developer-first REST API that provides a robust foundation for building autonomous agents without breaking the bank.
+* **Search First:** A search API that returns compact results (title, URL, and snippet). Your agent decides which pages, if any, are worth reading.
+* **Provider Choice:** Run without paid API keys through the native DuckDuckGo scraper, DDGS, or SearXNG, or connect the official Brave or Mojeek APIs. Change your model without rebuilding your search connection.
+* **Fetch When Needed:** `fetch_url` and `/api/v1/fetch` read one page and return its content as Markdown, with boilerplate removed where the worker can detect it.
+* **Native Integration:** With out-of-the-box **MCP** support, your AI tools can search the web with zero glue code.
+* **Architectural Transparency:** An open-source REST API that provides a foundation for building autonomous agents.
+
+### A Note on Token Use
+
+Searchbase aims to return compact, readable results, but it makes no token-saving guarantee. Token use depends on the client, the model, the provider, and the pages involved. Some agent harnesses do extra work before the model sees a page, such as summarizing fetched content with a smaller model, and can use fewer tokens than any external tool. If the lowest token count matters most, compare Searchbase with your client's built-in tools. Searchbase is built for independence and privacy, not for the lowest token count.
 
 ## ⚖️ License & Business Model
 

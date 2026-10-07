@@ -3,7 +3,7 @@ locale = 'en-us'
 title = 'Searchbase Documentation'
 
 [params]
-  description = 'Self-hosted, privacy-focused search for AI agents and LLMs.'
+  description = 'Open-source, self-hostable, privacy-focused web search API for AI agents.'
 
 [outputs]
   home = ['HTML', 'JSON']

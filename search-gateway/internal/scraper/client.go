@@ -44,7 +44,7 @@ func NewScraperClient(baseURL string) *ScraperClient {
 	}
 }
 
-// Extract asks crawl-worker to fetch a URL and return optimized Markdown.
+// Extract asks crawl-worker to fetch a URL and return its Markdown.
 func (c *ScraperClient) Extract(ctx context.Context, url string, jsRender bool) (string, error) {
 	ctx, span := c.tracer.Start(ctx, "ScraperClient.Extract")
 	defer span.End()

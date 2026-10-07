@@ -11,7 +11,7 @@ If your LLM client supports MCP (like Claude Desktop, Cursor, LM Studio, OpenWeb
 ## Available Tools
 
 - `web_search`: Search the live web and return compact search results.
-- `fetch_url`: Fetch one exact URL and extract optimized Markdown.
+- `fetch_url`: Fetch one exact URL and return its content as Markdown.
 
 ## OpenWebUI
 
@@ -130,10 +130,10 @@ require("codecompanion").setup({
         },
         ["searchbase_fetch"] = {
           extends = "cmd_tool",
-          description = "Fetch optimized web content using Searchbase",
+          description = "Fetch a web page as Markdown using Searchbase",
           opts = { require_approval_before = true },
           name = "searchbase_fetch",
-          system_prompt = [[You have access to a web fetch tool called searchbase_fetch. Use it to fetch optimized Markdown from a URL.]],
+          system_prompt = [[You have access to a web fetch tool called searchbase_fetch. Use it to read a URL as Markdown.]],
           schema = {
             properties = {
               url = {

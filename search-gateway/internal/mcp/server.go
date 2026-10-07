@@ -37,7 +37,7 @@ func NewServer(searchProvider search.SearchProvider, scraperClient *scraper.Scra
 
 	// Register our Web Search Tool
 	webSearchTool := mcp.NewTool("web_search",
-		mcp.WithDescription("Searches the live internet using various search engines and returns optimized markdown content from the top results. Useful for finding up-to-date information."),
+		mcp.WithDescription("Searches the web with the configured search provider and returns the top results as titles, URLs, and snippets. Useful for finding up-to-date information. Use fetch_url to read a specific result."),
 		mcp.WithString("query", mcp.Required(), mcp.Description("The search query to look for")),
 		mcp.WithNumber("limit", mcp.Description("Optional upper bound for returned search results. Omit or set to 0 to use the provider or search engine default.")),
 		mcp.WithString("engine", mcp.Description("The search engine to query (e.g., 'google', 'duckduckgo'). Defaults to 'auto' (all engines). Note: Only applies if the server uses the 'ddgs' or 'searxng' provider.")),
@@ -48,7 +48,7 @@ func NewServer(searchProvider search.SearchProvider, scraperClient *scraper.Scra
 	)
 
 	fetchTool := mcp.NewTool("fetch_url",
-		mcp.WithDescription("Fetches the content of a single URL and extracts optimized markdown. Useful for reading a specific webpage directly."),
+		mcp.WithDescription("Fetches a single URL and returns its content as Markdown. Useful for reading a specific webpage directly."),
 		mcp.WithString("url", mcp.Required(), mcp.Description("The full URL of the webpage to fetch")),
 		mcp.WithBoolean("js_render", mcp.Description("Whether to use a headless browser to execute JavaScript. Default is false.")),
 	)
@@ -102,8 +102,8 @@ func (s *MCPServer) RegisterRoutes(r *gin.Engine, baseURL string, heartbeatEnabl
 
 // HandleWebSearch handles the "web_search" tool execution.
 // It accepts a query and optional search filters.
-// It searches the internet and concurrently scrapes the top results,
-// returning an aggregated markdown string.
+// It searches with the configured provider and returns the results'
+// titles, URLs, and snippets as markdown without fetching any page.
 func (s *MCPServer) HandleWebSearch(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	var req search.Request
 	req.Query = request.GetString("query", "")
@@ -136,7 +136,7 @@ func (s *MCPServer) HandleWebSearch(ctx context.Context, request mcp.CallToolReq
 
 // HandleFetchURL handles the "fetch_url" tool execution.
 // It accepts a target url and an optional js_render flag,
-// directly scraping the page and returning the optimized markdown.
+// directly scraping the page and returning its markdown.
 func (s *MCPServer) HandleFetchURL(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	targetURL := request.GetString("url", "")
 	if targetURL == "" {

@@ -6,9 +6,11 @@ This file (`AGENTS.md`) is the single source of truth for the project's architec
 **API documentation mandate:** For every API-related change, always review Swagger/OpenAPI for affected endpoints, request/response schemas, status codes, and error descriptions, including worker or MCP changes that affect REST behavior. Update the Go Swagger annotations, run `task search-gateway:docs:swagger` and `task search-gateway:test:lint:swagger` from the repository root, and review all three generated files (`search-gateway/docs/docs.go`, `swagger.json`, and `swagger.yaml`). Include any generated changes in the same commit as the API change. Regeneration alone is not enough: verify the descriptions match runtime behavior.
 
 ## 1. Project Overview
-A self-hosted, highly efficient, privacy-focused Search Engine designed explicitly for AI Agents and LLMs. It bypasses the need for paid search APIs (like Tavily or Bing) and avoids the rate-limiting and formatting issues of standard SearXNG instances.
+An open-source, self-hostable, privacy-focused web search API for AI agents. Search is the primary product: it returns compact results (title, URL, snippet) through REST and natively through the **Model Context Protocol (MCP)** for plug-and-play integration with modern LLM clients (OpenWebUI, Claude Desktop, Cursor, Opencode, Neovim CodeCompanion, etc.). Page fetching is a secondary, explicitly requested companion that returns one page as Markdown.
 
-It provides clean, token-optimized Markdown ready for LLM context windows, and natively supports the **Model Context Protocol (MCP)** for plug-and-play integration with modern LLM UIs (OpenWebUI, Claude Desktop, Cursor, Opencode, Neovim CodeCompanion, etc.).
+It is provider-flexible: self-hosted deployments choose their search provider, including providers that need no paid API key. It works alongside frontier and local models rather than replacing them, so the model provider does not also control the agent's web access.
+
+**Positioning and copy:** Keep wording aligned with the managed counterpart, Searchbase Cloud (`~/Dev/searchbasecloud`): independence, privacy, open source, self-hostable, provider choice. Lead with search; present fetch as optional. Make no token-saving or token-optimization claims, and no performance claims beyond measured load-test results with their stated caveats, in product copy, tool descriptions, or docs. Token use depends on the client, model, provider, and pages and cannot be measured in absolute terms; say plainly that Searchbase aims for compact, readable results and is built for independence and privacy, not for the lowest token count.
 
 ## 2. System Architecture
 The system uses a **Hybrid Microservice Architecture** designed for Kubernetes:
@@ -31,7 +33,7 @@ The front-facing orchestrator. Built in Go for high concurrency, low memory foot
 
 ### B. Component 2: `crawl-worker` (Python)
 The internal heavy-lifter. Completely hidden from the outside world.
-*   **Role:** Headless browser, DOM cleaner, Markdown optimizer.
+*   **Role:** Headless browser, DOM cleaner, Markdown converter.
 *   **Tech Stack:** Python, FastAPI, `crawl4ai`.
 *   **Optional alternative:** `lightpanda-worker/` is an experimental Go HTTP wrapper around the official Lightpanda browser image. It implements the same `POST /extract` JSON shape, accepts but ignores `js_render`, and always executes JavaScript before returning Lightpanda's native Markdown dump with `--strip-mode clutter`. It does not replace the default Crawl4AI worker or promise identical Markdown cleaning. Keep it internal; `LIGHTPANDA_DISABLE_TELEMETRY=true` is set in its container. The worker launches one browser `fetch` process per request with bounded concurrency, timeout, and output size.
 *   **Lightpanda URL boundary:** Before invoking the browser, validate and normalize the target as an absolute HTTP(S) URL with a hostname, no credentials, no whitespace/control characters or backslashes, and a valid port; strip fragments. Validate again in the fetcher so callers cannot bypass the HTTP handler. This is URL syntax validation. The browser additionally runs with `--block-private-networks` by default, blocking private/internal destination IPs after DNS resolution. `LIGHTPANDA_WORKER_ALLOW_PRIVATE_NETWORKS=true` disables that browser guard for trusted local crawling and isolated load-test fixtures; keep it false for untrusted callers. Deployment network restrictions remain defense in depth.
@@ -63,13 +65,13 @@ Gateway metrics are planned but not implemented yet. The optional Lightpanda wor
 
 ### D. Component 2: `crawl-worker` (Python)
 The internal heavy-lifter. Completely hidden from the outside world.
-*   **Role:** Headless browser, DOM cleaner, Markdown optimizer.
+*   **Role:** Headless browser, DOM cleaner, Markdown converter.
 *   **Tech Stack:** Python, FastAPI, `crawl4ai`.
 *   **Responsibilities:**
     *   Expose internal endpoint `POST /extract`.
     *   Fetch URLs concurrently.
     *   Execute JavaScript (if requested via `js_render` flag).
-    *   Strip boilerplate (navbars, footers, ads) and extract LLM-optimized Markdown.
+    *   Strip boilerplate (navbars, footers, ads) and extract readable Markdown.
     *   Return the Markdown string to the Go Gateway.
 
 ## 3. Data Contracts (Initial Plan)
@@ -119,7 +121,7 @@ The internal heavy-lifter. Completely hidden from the outside world.
 
 ### Go Gateway MCP Server Tools
 *   **`web_search`**: Searches the web using the configured gateway search provider and returns the top results. Takes `query`, optional `limit`, `engine` (requires `ddgs` or `searxng` provider), `region`, `timelimit`, `safesearch`, and `page` arguments. `limit` is an optional upper bound; omitted or `0` uses the provider or search engine default. Brave maps supported country-language style `region` values such as `us-en` to Brave `country=US` and `search_lang=en`; unsupported country or language parts are omitted. Mojeek maps `limit` to `t`, maps `timelimit` values `d`, `m`, and `y` to `since`, intentionally does not support `w`, and intentionally does not support `page` yet. Provider failures are returned as safe provider-specific messages without exposing search queries, request bodies, tokens, or raw upstream URLs.
-*   **`fetch_url`**: Fetches the content of a single URL directly and extracts optimized markdown. Takes `url` and `js_render` arguments.
+*   **`fetch_url`**: Fetches a single URL directly and returns its content as Markdown. Takes `url` and `js_render` arguments.
 
 ### Python Worker Internal API
 **Endpoint:** `POST /extract`
