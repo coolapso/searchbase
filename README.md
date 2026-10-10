@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="base-logo.png" alt="Searchbase Logo" width="250"/>
+  <img src="branding/searchbase-banner.png" alt="Searchbase — Search for AI agents and LLMs" width="800"/>
   <h1>Searchbase</h1>
 </div>
 
@@ -81,3 +81,10 @@ If you like this project and want to support / contribute in a different way you
 <a href="https://www.buymeacoffee.com/coolapso" target="_blank">
   <img src="https://cdn.buymeacoffee.com/buttons/default-yellow.png" alt="Buy Me A Coffee" style="height: 51px !important;width: 217px !important;" />
 </a>
+
+
+## The original logo
+
+Kept here as a memory of where Searchbase started.
+
+<img src="base-logo.png" alt="Original Searchbase logo" width="200"/>
