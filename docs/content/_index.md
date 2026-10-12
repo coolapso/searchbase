@@ -25,7 +25,7 @@ This repository is my independent open-source project. It will remain separate f
 
 **The Searchbase Way:**
 * **Search First:** A search API that returns compact results (title, URL, and snippet). Your agent decides which pages, if any, are worth reading.
-* **Provider Choice:** Run without paid API keys through the native DuckDuckGo scraper, DDGS, or SearXNG, or connect the official Brave or Mojeek APIs. Change your model without rebuilding your search connection.
+* **Provider Choice:** Run without paid API keys through the native DuckDuckGo scraper, DDGS, or SearXNG, or connect the official Brave, Mojeek, or Staan APIs. Change your model without rebuilding your search connection.
 * **Fetch When Needed:** `fetch_url` and `/api/v1/fetch` read one page and return its content as Markdown, with boilerplate removed where the worker can detect it.
 * **Native Integration:** With out-of-the-box **MCP** support, your AI tools can search the web with zero glue code.
 * **Architectural Transparency:** An open-source REST API that provides a foundation for building autonomous agents.

@@ -205,10 +205,11 @@ The `search-gateway` can be configured using the following environment variables
 | :--- | :--- | :--- |
 | `SEARCHBASE_PORT` | `8080` | The port the gateway listens on. |
 | `SEARCHBASE_CRAWL_WORKER_ADDRESS` | `http://localhost:8000` | The internal URL of the Crawl4AI worker or optional Lightpanda-compatible worker. |
-| `SEARCHBASE_SEARCH_PROVIDER` | `searchbase_ddg` | The default search provider to use (`searchbase_ddg`, `ddgs`, `searxng`, `brave`, or `mojeek`). |
+| `SEARCHBASE_SEARCH_PROVIDER` | `searchbase_ddg` | The default search provider to use (`searchbase_ddg`, `ddgs`, `searxng`, `brave`, `mojeek`, or `staan`). |
 | `SEARCHBASE_DDGS_PROVIDER_ADDRESS` | `http://localhost:8001` | Optional. The URL to the DDGS engine, if `ddgs` provider is used. |
 | `SEARCHBASE_SEARXNG_PROVIDER_ADDRESS` | *(empty)* | Optional. The URL to the SearXNG instance, if `searxng` provider is used (e.g. `http://localhost:8080`). |
 | `SEARCHBASE_BRAVE_API_TOKEN` | *(empty)* | Required when `SEARCHBASE_SEARCH_PROVIDER=brave`. Brave Search API subscription token. |
+| `SEARCHBASE_STAAN_API_KEY` | *(empty)* | Required when `SEARCHBASE_SEARCH_PROVIDER=staan`. Staan API key. |
 | `SEARCHBASE_MOJEEK_API_KEY` | *(empty)* | Required when `SEARCHBASE_SEARCH_PROVIDER=mojeek`. Mojeek Search API key. |
 | `SEARCHBASE_ADDRESS` | *(empty)* | Optional. Used to override the base URL sent to MCP clients for SSE connections. **Reverse Proxy Note:** If deploying Searchbase behind a reverse proxy (like Traefik, Nginx, or Cloudflare Tunnels), leave this blank. The server will use relative paths, allowing the proxy to handle domain routing seamlessly. Set this only if you need to force a specific absolute URL. |
 | `SEARCHBASE_LOG_LEVEL` | `error` | Log level for structured logging (`debug`, `info`, `warn`, `error`). |
@@ -233,6 +234,7 @@ Searchbase initializes one search provider at startup through `SEARCHBASE_SEARCH
 | `ddgs` | Moderate | Lightweight metasearch | Runs a small DDGS backend service and supports multiple engines. |
 | `searxng` | Advanced | Full private metasearch | Requires external SearXNG instance. JSON search output must be enabled. |
 | `brave` | Easy | Official independent search API | Uses Brave Search API directly from the Go gateway. Requires `SEARCHBASE_BRAVE_API_TOKEN`. |
+| `staan` | Easy | Official web search API | Uses Staan directly from the Go gateway. Requires `SEARCHBASE_STAAN_API_KEY`. |
 | `mojeek` | Easy | Official independent search API | Uses Mojeek Search API directly from the Go gateway. Requires `SEARCHBASE_MOJEEK_API_KEY`. |
 
 ## Native DuckDuckGo Backend
@@ -344,3 +346,18 @@ suppressed and errors remain visible. Invalid levels fail startup.
 Output is JSON. `SEARCHBASE_LOG_FORMAT` is not currently supported.
 Versions through 1.3.3 hard-coded the logger to `info` despite parsing the
 configured level; rebuild or update the gateway to apply this fix.
+
+## Staan Web Search API Backend
+
+`staan` connects directly to the [Staan Web Search API](https://docs.staan.ai/docs/web-search).
+
+```bash
+SEARCHBASE_SEARCH_PROVIDER=staan
+SEARCHBASE_STAAN_API_KEY=your_staan_api_key
+```
+
+The gateway authenticates with a Bearer header and returns compact `title`, `url`, and `snippet` results through REST and MCP. It uses the standard web search endpoint without requesting page extraction.
+
+Staan returns ten results per page. A smaller positive `limit` truncates results locally; omitted, zero, negative, or larger limits return all available results from that page. `page` 1 (or nonpositive/omitted) uses the first page, while pages 2–4 use offsets 10, 20, and 30. Higher page values are capped at page 4.
+
+Supported Searchbase regions are `us-en`, `fr-fr`, and `de-de`, mapped to Staan markets `en-us`, `fr-fr`, and `de-de`. Empty or unsupported regions, including `wt-wt`, use Staan's default `fr-fr` market. `engine`, `timelimit`, and `safesearch` are ignored because Staan does not document these filters. Queries are limited upstream to 400 characters. Upstream rejections, including authentication and rate-limit failures, return safe provider errors (REST HTTP 502).

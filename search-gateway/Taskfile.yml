@@ -1,6 +1,7 @@
 version: '3'
 
 vars:
+  LOG_LEVEL: "debug"
   NAME: "search-gateway"
   CONTAINER_REGISTRY: "ghcr.io/coolapso/searchbase"
   REPOSITORY: "github.com/coolapso/searchbase"
@@ -14,13 +15,14 @@ tasks:
       - go run ./cmd/server/main.go
     env:
       SEARCHBASE_ENVIRONMENT: dev
-      SEARCHBASE_LOG_LEVEL: debug
+      SEARCHBASE_LOG_LEVEL: "{{.LOG_LEVEL}}"
 
   run:ddgs:
     desc: "Run the search gateway locally with ddgs provider"
     cmds:
       - go run ./cmd/server/main.go
     env:
+      SEARCHBASE_LOG_LEVEL: "{{.LOG_LEVEL}}"
       SEARCHBASE_SEARCH_PROVIDER: ddgs
       SEARCHBASE_DDGS_PROVIDER_ADDRESS: http://localhost:8001
 
@@ -29,6 +31,7 @@ tasks:
     cmds:
       - go run ./cmd/server/main.go
     env:
+      SEARCHBASE_LOG_LEVEL: "{{.LOG_LEVEL}}"
       SEARCHBASE_SEARCH_PROVIDER: searxng
       SEARCHBASE_SEARXNG_PROVIDER_ADDRESS: http://localhost:8002
 
@@ -42,6 +45,7 @@ tasks:
           --env prod brave)
         go run ./cmd/server/main.go
     env:
+      SEARCHBASE_LOG_LEVEL: "{{.LOG_LEVEL}}"
       SEARCHBASE_SEARCH_PROVIDER: brave
 
   run:mojeek:
@@ -54,7 +58,22 @@ tasks:
           --env prod mojeek)
         go run ./cmd/server/main.go
     env:
+      SEARCHBASE_LOG_LEVEL: "{{.LOG_LEVEL}}"
       SEARCHBASE_SEARCH_PROVIDER: mojeek
+
+  run:staan:
+    desc: "Run the search gateway locally with staan provider"
+    cmds:
+      - |
+        export SEARCHBASE_STAAN_API_KEY=$(infisical secrets get --plain \
+          --domain="https://eu.infisical.com" \
+          --projectId {{.INFISICAL_PROJECT_ID}} \
+          --path staan \
+          --env prod api_key)
+        go run ./cmd/server/main.go
+    env:
+      SEARCHBASE_LOG_LEVEL: "{{.LOG_LEVEL}}"
+      SEARCHBASE_SEARCH_PROVIDER: staan
 
 
   fmt:

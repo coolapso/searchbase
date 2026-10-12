@@ -117,6 +117,11 @@ func TestNewSettings_SearchProviderValidationErrors(t *testing.T) {
 			expectedError: "provider API Token not set: searchbase provider brave requires SEARCHBASE_BRAVE_API_TOKEN",
 		},
 		{
+			name:          "staan missing token",
+			provider:      "staan",
+			expectedError: "provider API Token not set: searchbase provider staan requires SEARCHBASE_STAAN_API_KEY",
+		},
+		{
 			name:          "mojeek missing token",
 			provider:      "mojeek",
 			expectedError: "provider API Token not set: searchbase provider mojeek requires SEARCHBASE_MOJEEK_API_KEY",

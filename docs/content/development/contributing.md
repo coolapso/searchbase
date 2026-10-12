@@ -26,6 +26,8 @@ Read the full agreement in [`CLA.md`](https://github.com/coolapso/searchbase/blo
 ## Development
 
 Searchbase uses [Task](https://taskfile.dev/) to automate development tasks.
+
+All `search-gateway:run` tasks, including provider variants such as `search-gateway:run:staan`, enable debug logging through the shared `LOG_LEVEL` Task variable. Override it with `task search-gateway:run:staan LOG_LEVEL=info` (or `warn`/`error`). Successful requests are logged at info; HTTP 5xx requests are logged at error.
 Install Docker Engine with the Compose plugin and Task, then run the commands
 below from the repository root. User-facing demos live in `examples/compose/`
 and `examples/k8s/`; checkout-built stacks live in `dev/compose/` and share

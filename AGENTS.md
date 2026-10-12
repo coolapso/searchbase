@@ -29,7 +29,9 @@ The front-facing orchestrator. Built in Go for high concurrency, low memory foot
     *   Return compact search results (`title`, `url`, `snippet`) without automatically fetching page content.
     *   Fetch page content only through `/api/v1/fetch` or the MCP `fetch_url` tool when the client/LLM explicitly requests it.
     *   **Configuration:** Uses Viper library with centralized `settings` package (`internal/settings`) enforcing a strict `SEARCHBASE_` prefix for all environment variables (e.g., `SEARCHBASE_PORT`, `SEARCHBASE_CRAWL_WORKER_ADDRESS`, `SEARCHBASE_LOG_LEVEL`). Supports defaults and automatic env var binding. Grouped settings live in their own files (`otel.go` for tracing, `mcp.go` for MCP transport) and expose a `validate()` method so misconfiguration fails fast at startup.
-*   **Design Pattern:** Uses Interfaces (e.g., `SearchProvider`) to allow easy plugging of search APIs and metasearch providers without changing core logic. Current providers include native DuckDuckGo HTML (`searchbase_ddg`), DDGS (`ddgs`), SearXNG (`searxng`), Brave Search API (`brave`), and Mojeek Search API (`mojeek`).
+*   **Design Pattern:** Uses Interfaces (e.g., `SearchProvider`) to allow easy plugging of search APIs and metasearch providers without changing core logic. Current providers include native DuckDuckGo HTML (`searchbase_ddg`), DDGS (`ddgs`), SearXNG (`searxng`), Brave Search API (`brave`), Mojeek Search API (`mojeek`), and Staan Web Search API (`staan`).
+
+*   **Staan backend:** `SEARCHBASE_SEARCH_PROVIDER=staan` requires `SEARCHBASE_STAAN_API_KEY`. The gateway calls `GET https://api.staan.ai/v2/search/web` with Bearer authentication, mapping `web.results` to title/URL/snippet. `us-en`, `fr-fr`, and `de-de` map to markets `en-us`, `fr-fr`, and `de-de`; unsupported/empty regions omit market (upstream default `fr-fr`). Pages above 1 map to offsets 10/20/30, capped at page 4; nonpositive pages use the first page. Staan always retrieves ten results; smaller positive limits truncate locally. Engine, time limit, and safe search are ignored. Queries over 400 characters fail upstream and surface as safe provider errors (REST 502). No automatic page extraction is requested.
 
 ### B. Component 2: `crawl-worker` (Python)
 The internal heavy-lifter. Completely hidden from the outside world.
@@ -170,6 +172,8 @@ The logo and banner in `branding/` are copied from Searchbase Cloud’s approved
 ### Documentation Site
 The Hugo site under `docs/` separates operating Searchbase from working on its source. `docs/content/docs/` holds user-facing setup, API, MCP, architecture, and self-hosting guidance. `docs/content/development/` holds contributor workflow and isolated load-testing guidance. The sidebar and home page expose both sections. Keep deployment examples under `examples/` and checkout-built stacks under `dev/`, and keep those boundaries clear in the site. The site uses custom local layouts and styling, not an external theme. Keep it updated whenever setup, configuration, provider behavior, MCP usage, deployment notes, observability, or API behavior changes. Use `task docs:hugo` to preview locally and `hugo --destination /tmp/searchbase-docs-build` from `docs/` to verify builds without writing generated output into the repository.
 
+Gateway local `search-gateway:run` tasks and provider variants share the `LOG_LEVEL` Task variable (default `debug`), passed as `SEARCHBASE_LOG_LEVEL` only to run tasks. Override with `task search-gateway:run:staan LOG_LEVEL=info`.
+
 ### Contributor License Agreement
 All external contributors must accept `CLA.md` before a pull request can be merged. `.github/workflows/cla.yaml` uses CLA Assistant Lite to require a signature comment and stores accepted signatures on the `cla-signatures` branch at `.github/cla/signatures/v1/cla.json`. The `github-actions[bot]` account is allowlisted for generated image-update PRs. Keep `CLA.md`, `CONTRIBUTING.md`, the PR template, the CLA workflow, and the docs Contributing page in sync if the contribution process changes.
 
@@ -210,6 +214,7 @@ To ensure reliable and fast multi-architecture builds, the project strictly adhe
 - [x] **DDGS Microservice:** Integrate `ddgs` as an internal Python API for fallback and multi-engine search.
 - [x] **Brave Search API Provider:** Implement native Go support for the official Brave Search API. Configure with `SEARCHBASE_SEARCH_PROVIDER=brave` and `SEARCHBASE_BRAVE_API_TOKEN`.
 - [x] **Mojeek Search API Provider:** Implement native Go support for the official Mojeek Search API. Configure with `SEARCHBASE_SEARCH_PROVIDER=mojeek` and `SEARCHBASE_MOJEEK_API_KEY`.
+- [x] **Staan Web Search API Provider:** Native Go backend configured with `SEARCHBASE_SEARCH_PROVIDER=staan` and `SEARCHBASE_STAAN_API_KEY`.
 - [ ] **Additional Native Cloud Providers:** Implement native Go support for other major search engine APIs when viable (Google Search API, Bing, etc.).
 - [ ] **Engine Selection:** Allow clients to select specific search engines via the API.
 - [ ] **Result Aggregation:** Support searching from multiple search engines concurrently and aggregating/deduplicating the results.

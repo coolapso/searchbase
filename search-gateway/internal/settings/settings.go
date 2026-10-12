@@ -32,6 +32,7 @@ var providerSpecs = map[string]providerSpec{
 	"searxng":        {addressEnv: "SEARXNG_PROVIDER_ADDRESS"},
 	"brave":          {tokenEnv: "BRAVE_API_TOKEN"},
 	"mojeek":         {tokenEnv: "MOJEEK_API_KEY"},
+	"staan":          {tokenEnv: "STAAN_API_KEY"},
 }
 
 func (s *Settings) Port() string                    { return s.port }

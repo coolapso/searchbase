@@ -12,6 +12,7 @@ Searchbase uses a hybrid microservice architecture built for horizontal scalabil
 4. **`searxng` - *Optional*:** Support for connecting to an external SearXNG instance as a backend provider for metasearch capabilities.
 5. **Brave Search API - *Optional*:** Direct Go gateway integration with Brave's official web search API. Requires `SEARCHBASE_SEARCH_PROVIDER=brave` and `SEARCHBASE_BRAVE_API_TOKEN`.
 6. **Mojeek Search API - *Optional*:** Direct Go gateway integration with Mojeek's official web search API. Requires `SEARCHBASE_SEARCH_PROVIDER=mojeek` and `SEARCHBASE_MOJEEK_API_KEY`.
+7. **Staan Web Search API - *Optional*:** Direct Go integration with Staan's standard web search endpoint. Requires `SEARCHBASE_SEARCH_PROVIDER=staan` and `SEARCHBASE_STAAN_API_KEY`.
 
 ---
 

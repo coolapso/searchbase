@@ -30,6 +30,8 @@ You can also build your own scripts or use LangChain / LlamaIndex by hitting the
 - `safesearch`: Safe search filtering (`"on"`, `"moderate"`, `"off"`). Defaults to `"moderate"`.
 - `page`: The page number of results to fetch. Defaults to `1`.
 
+Staan supports `region` values `us-en`, `fr-fr`, and `de-de`; other values use its `fr-fr` default. It returns ten results per page and truncates smaller positive `limit` values locally. Pages above 4 cap at 4; nonpositive pages use page 1. Staan ignores `engine`, `timelimit`, and `safesearch`. Queries over 400 characters are rejected upstream (REST 502). These mappings also apply to MCP `web_search`.
+
 **Response:**
 ```json
 [

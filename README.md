@@ -5,7 +5,7 @@
 
 **SEARCHBASE** is an open-source, self-hostable, privacy-focused **web search API for AI agents**. It returns compact search results (title, URL, and snippet) through REST and the **Model Context Protocol (MCP)**, and can fetch a single page as Markdown when your agent needs to read it.
 
-It is provider-flexible: you choose the search provider, independently of your model. Searchbase works alongside frontier and local models rather than replacing them, so your model provider does not also control your agent's way into the web. MCP support makes it a plug-and-play search tool for clients like Claude Desktop, Cursor, OpenWebUI, Opencode, and Neovim CodeCompanion.
+It is provider-flexible: choose native DuckDuckGo, DDGS, SearXNG, Brave, Mojeek, or Staan independently of your model. Searchbase works alongside frontier and local models rather than replacing them, so your model provider does not also control your agent's way into the web. MCP support makes it a plug-and-play search tool for clients like Claude Desktop, Cursor, OpenWebUI, Opencode, and Neovim CodeCompanion.
 
 ---
 

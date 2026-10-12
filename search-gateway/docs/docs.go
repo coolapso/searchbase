@@ -124,7 +124,7 @@ const docTemplate = `{
         },
         "/api/v1/search": {
             "post": {
-                "description": "Use this tool to search the internet for a general query. Do NOT use this if you already have a specific URL.",
+                "description": "Use this tool to search the internet for a general query. Do NOT use this if you already have a specific URL.\nStaan returns up to ten results per page; smaller positive limits truncate locally. It supports us-en, fr-fr and de-de regions and pages 1-4 (higher pages cap at 4). Other regions use Staan's fr-fr default. Staan ignores engine, timelimit and safesearch; queries over 400 characters are rejected upstream.",
                 "consumes": [
                     "application/json"
                 ],
@@ -170,7 +170,7 @@ const docTemplate = `{
                         }
                     },
                     "502": {
-                        "description": "Bad Gateway",
+                        "description": "Safe provider-specific error for upstream request, status or response failures",
                         "schema": {
                             "$ref": "#/definitions/api.ErrorResponse"
                         }
