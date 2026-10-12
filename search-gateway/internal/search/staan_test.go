@@ -39,7 +39,7 @@ func TestStaanRequestMapping(t *testing.T) {
 		page           int
 		offset         string
 	}{
-		{"", "", 0, ""}, {"wt-wt", "", -1, ""}, {"gb-en", "", 1, ""},
+		{"", "en-us", 0, ""}, {"wt-wt", "en-us", -1, ""}, {"gb-en", "en-us", 1, ""},
 		{"US-EN", "en-us", 2, "10"}, {"fr-fr", "fr-fr", 4, "30"}, {"de-de", "de-de", 999, "30"},
 	} {
 		req, err := NewStaanProvider("secret").newRequest(context.Background(), Request{Query: "é & test", Region: tt.region, Page: tt.page})

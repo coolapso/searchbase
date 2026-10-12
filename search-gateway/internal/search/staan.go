@@ -118,14 +118,15 @@ func (p *StaanProvider) newRequest(ctx context.Context, req Request) (*http.Requ
 	}
 	q := searchURL.Query()
 	q.Set("q", req.Query)
-	// Omit unsupported regions so Staan uses its default fr-fr market.
+	// Staan has no worldwide market and defaults to fr-fr, so empty and
+	// unsupported regions use en-us instead.
 	switch strings.ToLower(req.Region) {
-	case "us-en":
-		q.Set("market", "en-us")
 	case "fr-fr":
 		q.Set("market", "fr-fr")
 	case "de-de":
 		q.Set("market", "de-de")
+	default:
+		q.Set("market", "en-us")
 	}
 	if req.Page > 1 {
 		q.Set("offset", strconv.Itoa((min(req.Page, 4)-1)*10))

@@ -81,7 +81,7 @@ func (s *APIServer) HandleHealth(c *gin.Context) {
 // @Summary Search the Web
 // @ID webSearch
 // @Description Use this tool to search the internet for a general query. Do NOT use this if you already have a specific URL.
-// @Description Staan returns up to ten results per page; smaller positive limits truncate locally. It supports us-en, fr-fr and de-de regions and pages 1-4 (higher pages cap at 4). Other regions use Staan's fr-fr default. Staan ignores engine, timelimit and safesearch; queries over 400 characters are rejected upstream.
+// @Description Staan returns up to ten results per page; smaller positive limits truncate locally. It supports us-en, fr-fr and de-de regions and pages 1-4 (higher pages cap at 4). Other and empty regions use us-en. Staan ignores engine, timelimit and safesearch; queries over 400 characters are rejected upstream.
 // @Tags Search
 // @Accept json
 // @Produce json

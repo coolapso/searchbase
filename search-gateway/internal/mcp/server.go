@@ -41,7 +41,7 @@ func NewServer(searchProvider search.SearchProvider, scraperClient *scraper.Scra
 		mcp.WithString("query", mcp.Required(), mcp.Description("The search query to look for")),
 		mcp.WithNumber("limit", mcp.Description("Optional upper bound for returned search results. Omit or set to 0 to use the provider or search engine default.")),
 		mcp.WithString("engine", mcp.Description("The search engine to query (e.g., 'google', 'duckduckgo'). Defaults to 'auto' (all engines). Note: Only applies if the server uses the 'ddgs' or 'searxng' provider.")),
-		mcp.WithString("region", mcp.Description("The region to search in (e.g., 'wt-wt', 'us-en'). Staan supports us-en, fr-fr, de-de; other values use its fr-fr default.")),
+		mcp.WithString("region", mcp.Description("The region to search in (e.g., 'wt-wt', 'us-en'). Staan supports us-en, fr-fr, de-de; other values use us-en.")),
 		mcp.WithString("timelimit", mcp.Description("Time limit for the search ('d'=day, 'w'=week, 'm'=month, 'y'=year). Leave empty for no limit. Ignored by Staan.")),
 		mcp.WithString("safesearch", mcp.Description("Safe search filtering ('on', 'moderate', 'off'). Ignored by Staan. Defaults to 'moderate'")),
 		mcp.WithNumber("page", mcp.Description("The page number of results to fetch. Staan uses pages 1-4, caps higher values at 4, and treats omitted or nonpositive values as page 1.")),

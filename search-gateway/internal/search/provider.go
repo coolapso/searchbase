@@ -14,7 +14,7 @@ type Request struct {
 	Query      string `json:"query" binding:"required" example:"who is the president" description:"The search query to look for"`
 	Limit      int    `json:"limit,omitempty" example:"3" description:"Optional upper bound for returned search results. Omit or set to 0 to use the provider or search engine default."`
 	Engine     string `json:"engine,omitempty" example:"auto" description:"The search engine to query (e.g., 'google', 'duckduckgo'). Defaults to 'auto' (all engines). Note: Only applies if the server uses the 'ddgs' or 'searxng' provider."`
-	Region     string `json:"region,omitempty" example:"wt-wt" description:"The region to search in (e.g., 'wt-wt', 'us-en'). Staan supports us-en, fr-fr, de-de; other values use its fr-fr default."`
+	Region     string `json:"region,omitempty" example:"wt-wt" description:"The region to search in (e.g., 'wt-wt', 'us-en'). Staan supports us-en, fr-fr, de-de; other values use us-en."`
 	TimeLimit  string `json:"timelimit,omitempty" example:"d" description:"Time limit for the search ('d' for day, 'w' for week, 'm' for month, 'y' for year). Leave empty for no limit. Ignored by Staan."`
 	SafeSearch string `json:"safesearch,omitempty" example:"moderate" description:"Safe search filtering ('on', 'moderate', 'off'). Ignored by Staan."`
 	Page       int    `json:"page,omitempty" example:"1" description:"The page number of results to fetch. Staan uses pages 1-4, caps higher values at 4, and treats omitted or nonpositive values as page 1."`
