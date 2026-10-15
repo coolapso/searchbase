@@ -46,8 +46,8 @@ Experimental Lightpanda fetch worker with the native DuckDuckGo search backend:
 docker compose -f examples/compose/docker-compose.lightpanda.yml up --build
 ```
 
-This example builds the Go `/extract` wrapper on Lightpanda's official
-`1.0.0` release image, pinned by digest for amd64 and arm64. Only the gateway
+This example builds the Go `/extract` wrapper on an official stable Lightpanda
+release image, pinned by digest for amd64 and arm64 in `lightpanda-worker/Containerfile`. Only the gateway
 publishes a host port; the worker stays on the Compose network. For production,
 pin the published `lightpanda-worker` image by version or digest. Lightpanda is
 AGPL-3.0 licensed; review

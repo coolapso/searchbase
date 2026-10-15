@@ -21,8 +21,8 @@ remain internal areas for regression testing and future optimization.
 At **4 worker CPUs and a 2 GiB worker limit**, fetching the same local
 JavaScript page:
 
-These saved results used the previous pinned nightly build. The current
-`1.0.0` release image has not been benchmarked here.
+These saved results used the previous pinned nightly build, not the stable
+release image pinned in `lightpanda-worker/Containerfile`.
 
 | Path | Crawl4AI | Lightpanda |
 | :--- | ---: | ---: |
