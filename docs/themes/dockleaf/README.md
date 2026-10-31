@@ -1,8 +1,8 @@
 # Dockleaf vendored theme
 
 Source checkout: `~/Dev/dockleaf`
-Intended upstream: https://github.com/coolapso/dockleaf
-License: AGPLv3 (see LICENSE and NOTICE).
+Upstream: https://github.com/coolapso/hugo-theme-dockleaf
+License: MIT (see LICENSE and NOTICE).
 
 This directory is a self-contained copy of Dockleaf. Searchbase uses it through
 `theme = 'dockleaf'` in `docs/hugo.toml`. No sibling checkout, Go module download,
