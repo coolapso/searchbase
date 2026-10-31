@@ -1,0 +1,7 @@
+{{ range .pages }}
+  {{ if not .Params.hideFromNav }}
+    {{ $active := eq .RelPermalink $.current.RelPermalink }}
+    <a class="{{ if .IsSection }}side-nav-heading side-nav-section{{ end }}{{ if $active }} active{{ end }}" href="{{ .RelPermalink }}"{{ if $active }} aria-current="page"{{ end }}>{{ .Params.navTitle | default .Title }}</a>
+    {{ if .IsSection }}<div class="nav-children">{{ partial "navigation.html" (dict "pages" .Pages.ByWeight "current" $.current) }}</div>{{ end }}
+  {{ end }}
+{{ end }}

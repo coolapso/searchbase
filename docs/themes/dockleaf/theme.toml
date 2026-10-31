@@ -1,0 +1,10 @@
+name = "Dockleaf"
+license = "AGPL-3.0-only"
+licenselink = "https://github.com/coolapso/dockleaf/blob/main/LICENSE"
+description = "A lightweight dark Hugo documentation theme with built-in search."
+tags = ["documentation", "dark", "responsive", "search"]
+features = ["nested navigation", "table of contents", "search", "syntax highlighting"]
+min_version = "0.168.0"
+[author]
+  name = "Carlos Colaço"
+  homepage = "https://coolapso.sh"

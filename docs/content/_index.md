@@ -1,6 +1,31 @@
 ---
 title: "Searchbase"
 type: "docs"
+heading: "Searchbase Docs"
+description: "Set up and self-host Searchbase, integrate MCP or REST clients, and find a separate guide for source development."
+banner: "branding/searchbase-banner.svg"
+bannerAlt: "Searchbase — Search for AI agents and LLMs"
+bannerWidth: 1600
+bannerHeight: 600
+cards:
+  - title: "Getting Started"
+    url: "/docs/getting-started/"
+    description: "Try the Compose and Kubernetes examples, then configure Searchbase for your environment."
+  - title: "MCP Integration"
+    url: "/docs/mcp-integration/"
+    description: "Plug into OpenWebUI, Claude Desktop, Cursor, LM Studio, and other MCP clients."
+  - title: "REST API"
+    url: "/docs/api-reference/"
+    description: "Simple search and fetch endpoints for custom agents and scripts."
+  - title: "Privacy First"
+    url: "/docs/architecture/"
+    description: "Structured logs avoid raw IPs, user agents, and query correlation."
+  - title: "Self Hosting"
+    url: "/docs/self-hosting/"
+    description: "Choose a search backend and deploy with the Compose or Kubernetes examples."
+  - title: "Development"
+    url: "/development/"
+    description: "Build from a checkout, contribute changes, and run isolated load tests."
 ---
 # Searchbase
 

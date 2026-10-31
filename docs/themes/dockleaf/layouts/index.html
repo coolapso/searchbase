@@ -1,0 +1,12 @@
+{{ define "main" }}
+  <section class="docs-home">
+    {{ with .Params.banner }}<img class="brand-banner" src="{{ . | relURL }}" alt="{{ $.Params.bannerAlt | default "" }}"{{ with $.Params.bannerWidth }} width="{{ . }}"{{ end }}{{ with $.Params.bannerHeight }} height="{{ . }}"{{ end }}>{{ end }}
+    <p class="eyebrow">{{ .Params.eyebrow | default (i18n "documentation") }}</p>
+    <h1>{{ .Params.heading | default .Title }}</h1>
+    {{ with .Description }}<p class="lead">{{ . }}</p>{{ end }}
+  </section>
+  {{ with .Params.cards }}<section class="feature-grid">
+    {{ range . }}<a class="feature-card" href="{{ strings.TrimPrefix "/" .url | relURL }}"><span>{{ .title }}</span><p>{{ .description }}</p></a>{{ end }}
+  </section>{{ end }}
+  <article class="doc home-doc">{{ .Content }}</article>
+{{ end }}

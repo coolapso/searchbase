@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="{{ site.Language.Locale | default site.Language.Lang }}">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="{{ .Description | default site.Params.description }}">
+    <title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }} | {{ site.Title }}{{ end }}</title>
+    {{ with site.Params.favicon }}<link rel="icon" href="{{ . | relURL }}">{{ end }}
+    <link rel="stylesheet" href="{{ "css/main.css" | relURL }}">
+    {{ with resources.Get "css/custom.css" }}<link rel="stylesheet" href="{{ .RelPermalink }}">{{ end }}
+  </head>
+  <body>
+    <a class="skip-link" href="#content">{{ i18n "skip" }}</a>
+    <header class="topbar">
+      <a class="brand" href="{{ site.Home.RelPermalink }}">
+        {{ with site.Params.logo }}<img src="{{ . | relURL }}" alt="" width="36" height="36">{{ end }}
+        <span>{{ site.Params.brand | default site.Title }}</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-label="{{ i18n "toggle" }}" aria-controls="sidebar" aria-expanded="false">{{ i18n "menu" }}</button>
+      <nav class="toplinks" aria-label="{{ i18n "primary" }}">
+        {{ range site.Menus.main }}<a href="{{ .URL | relURL }}">{{ .Name }}</a>{{ end }}
+      </nav>
+    </header>
+    <div class="shell">
+      <aside id="sidebar" class="sidebar" aria-label="{{ i18n "navigation" }}">
+        <div class="search-box">
+          <label class="sr-only" for="search-input">{{ i18n "search" }}</label>
+          <input id="search-input" type="search" placeholder="{{ i18n "search" }}" autocomplete="off" data-index="{{ with site.Home.OutputFormats.Get "JSON" }}{{ .RelPermalink }}{{ end }}" aria-controls="search-results">
+          <div id="search-results" class="search-results" hidden></div>
+          <p id="search-status" class="search-status" role="status" data-error="{{ i18n "searchError" }}" data-empty="{{ i18n "searchEmpty" }}" data-loading="{{ i18n "searchLoading" }}"></p>
+        </div>
+        <nav class="side-nav">
+          <div class="mobile-links">{{ range site.Menus.main }}<a href="{{ .URL | relURL }}">{{ .Name }}</a>{{ end }}</div>
+          {{ partial "navigation.html" (dict "pages" site.Home.Pages.ByWeight "current" .) }}
+        </nav>
+      </aside>
+      <main id="content" class="content">
+        {{ block "main" . }}{{ end }}
+        <footer class="site-footer">
+          {{ with site.Params.footer }}<p>{{ . | markdownify }}</p>{{ end }}
+          {{ with site.Menus.footer }}<nav aria-label="{{ i18n "footer" }}">{{ range . }}<a href="{{ .URL | relURL }}">{{ .Name }}</a>{{ end }}</nav>{{ end }}
+        </footer>
+      </main>
+      {{ if and (not .IsHome) .Fragments.Headings }}
+        <aside class="toc" aria-label="{{ i18n "toc" }}"><p>{{ i18n "toc" }}</p>{{ .TableOfContents }}</aside>
+      {{ end }}
+    </div>
+    <script src="{{ "js/search.js" | relURL }}" defer></script>
+    <script src="{{ "js/main.js" | relURL }}" defer></script>
+  </body>
+</html>

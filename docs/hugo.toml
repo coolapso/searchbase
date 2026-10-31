@@ -1,9 +1,15 @@
 baseURL = 'https://docs.searchbase.md/'
 locale = 'en-us'
+theme = 'dockleaf'
 title = 'Searchbase Documentation'
 
 [params]
   description = 'Open-source, self-hostable, privacy-focused web search API for AI agents.'
+
+  brand = 'Searchbase'
+  logo = 'branding/searchbase-icon.png'
+  favicon = 'branding/searchbase-icon.png'
+  footer = '© 2026 coolapso. Searchbase is dual-licensed under AGPLv3 and a Commercial License.'
 
 [outputs]
   home = ['HTML', 'JSON']
@@ -16,3 +22,43 @@ title = 'Searchbase Documentation'
   [markup.highlight]
     style = "onedark"
     lineNos = true
+
+[[menus.main]]
+  name = "Start"
+  url = "/docs/getting-started/"
+  weight = 1
+
+[[menus.main]]
+  name = "MCP"
+  url = "/docs/mcp-integration/"
+  weight = 2
+
+[[menus.main]]
+  name = "API"
+  url = "/docs/api-reference/"
+  weight = 3
+
+[[menus.main]]
+  name = "Development"
+  url = "/development/"
+  weight = 4
+
+[[menus.main]]
+  name = "GitHub"
+  url = "https://github.com/coolapso/searchbase"
+  weight = 5
+
+[[menus.footer]]
+  name = "GitHub"
+  url = "https://github.com/coolapso/searchbase"
+  weight = 1
+
+[[menus.footer]]
+  name = "License"
+  url = "https://github.com/coolapso/searchbase/blob/main/LICENSE"
+  weight = 2
+
+[[menus.footer]]
+  name = "Sponsor"
+  url = "https://github.com/sponsors/coolapso"
+  weight = 3

@@ -1,0 +1,35 @@
+[skip]
+other = "Skip to content"
+
+[toggle]
+other = "Toggle navigation"
+
+[menu]
+other = "Menu"
+
+[primary]
+other = "Primary"
+
+[navigation]
+other = "Documentation navigation"
+
+[search]
+other = "Search docs..."
+
+[searchError]
+other = "Search is unavailable. Please try again."
+
+[searchEmpty]
+other = "No matching pages."
+
+[searchLoading]
+other = "Searching..."
+
+[footer]
+other = "Footer"
+
+[toc]
+other = "On This Page"
+
+[documentation]
+other = "Documentation"

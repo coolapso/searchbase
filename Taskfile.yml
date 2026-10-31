@@ -101,6 +101,11 @@ tasks:
     cmds:
       - hugo server -D
 
+  docs:check:
+    desc: "Validate documentation with Dockleaf at root and subdirectory URLs"
+    cmds:
+      - python3 scripts/check-docs.py
+
   docs:build:
     desc: "Build the documentation site"
     dir: ./docs

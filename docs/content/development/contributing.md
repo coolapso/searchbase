@@ -84,3 +84,15 @@ I believe in transparency regarding how this project is built. While AI tools (l
 However, I do heavily delegate boilerplate tasks, CI/CD pipeline generation, testing setups, and documentation writing to AI agents to maximize efficiency.
 
 When contributing to this project, using AI to assist you is absolutely fine and encouraged! However, please ensure you deeply understand the code you are submitting. **Low-effort, blindly copy-pasted AI-generated Pull Requests will not be accepted.** Quality, intent, and architectural alignment matter far more than speed.
+
+## Documentation theme
+
+The documentation uses **Dockleaf**, vendored in `docs/themes/dockleaf`.
+Searchbase branding, header and footer menus live in `docs/hugo.toml`; homepage
+copy and cards live in `docs/content/_index.md`. Project artwork remains in
+`docs/static/branding/`.
+
+Develop reusable theme changes in the standalone `~/Dev/dockleaf` checkout,
+run its `task test`, and synchronize the files listed in the vendored theme's
+README. Searchbase builds use the checked-in copy and require no sibling checkout.
+Run `task docs:check` before submitting documentation or theme changes.

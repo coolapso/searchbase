@@ -1,7 +1,7 @@
 {{ define "main" }}
   <article class="doc">
     <header class="doc-header">
-      <p class="eyebrow">Documentation</p>
+      <p class="eyebrow">{{ .Params.eyebrow | default (i18n "documentation") }}</p>
       <h1>{{ .Title }}</h1>
       {{ with .Description }}<p class="lead">{{ . }}</p>{{ end }}
     </header>
