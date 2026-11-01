@@ -8,6 +8,10 @@ If your LLM client supports MCP (like Claude Desktop, Cursor, LM Studio, OpenWeb
 - **MCP SSE Endpoint:** `http://localhost:8080/mcp/sse`
 - **MCP Streamable HTTP Endpoint:** `http://localhost:8080/mcp/http`
 
+{{< hint info >}}
+Using Searchbase Cloud? The [Cloud Quickstart](https://searchbase.md/start#mcp) has the hosted endpoint and API-key configurations for Claude Code, OpenCode, Codex, VS Code, and Cursor.
+{{< /hint >}}
+
 ## Available Tools
 
 - `web_search`: Search the live web and return compact search results.
