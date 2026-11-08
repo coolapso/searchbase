@@ -8,7 +8,7 @@ RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags=
 
 # The official image contains the glibc-linked Lightpanda binary and tini.
 # Pin an upstream release by its multi-architecture index digest.
-FROM lightpanda/browser:1.0.3@d901cf2374b8372935f690da1db896b8c1d5317022d462fdceeaf4813e8be724
+FROM lightpanda/browser:1.0.3@sha256:d901cf2374b8372935f690da1db896b8c1d5317022d462fdceeaf4813e8be724
 COPY --from=builder /lightpanda-worker /usr/local/bin/lightpanda-worker
 ENV LIGHTPANDA_DISABLE_TELEMETRY=true \
     LIGHTPANDA_DISABLE_CORE_DUMP=1 \
