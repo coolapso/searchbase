@@ -32,7 +32,7 @@ jobs:
       - name: Update pinned Lightpanda base
         env:
           GH_TOKEN: ${{ github.token }}
-        run: task lightpanda-worker:container:update-base
+        run: task lightpanda:update
 
       - name: Create or update pull request
         uses: peter-evans/create-pull-request@v8

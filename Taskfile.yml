@@ -41,6 +41,11 @@ tasks:
     cmds:
       - docker compose -p searchbase-dev --project-directory . -f dev/compose/docker-compose.lightpanda.yml down --remove-orphans
 
+  lightpanda:update:
+    desc: "Pin the Lightpanda worker to the latest stable upstream browser image"
+    cmds:
+      - task: lightpanda-worker:update
+
   container:login:
     desc: "Login to GHCR"
     cmds:

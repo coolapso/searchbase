@@ -68,8 +68,9 @@ The root `container:build`, `container:build:all`, and `container:push` tasks
 include the Lightpanda worker. The release workflow publishes versioned
 images from a semantic release tag.
 
-Run `task lightpanda-worker:container:update-base` to check for a newer stable
-Lightpanda release and update the worker's Containerfile pin. The task requires
+Run `task lightpanda:update` from the repository root, or `task update` inside
+`lightpanda-worker/`, to check for a newer stable Lightpanda release and update
+the worker's Containerfile pin. The task requires
 `gh` and Docker Buildx and verifies both amd64 and arm64 before changing the
 version and digest.
 
